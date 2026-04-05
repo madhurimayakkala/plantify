@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- HERO SECTION -->
+<section class="hero">
+  <h1 class="hero-title">Welcome to Your Garden 🌿</h1>
+  <p class="hero-sub">
+    Each goal is a seed — water it with consistency and watch your life bloom.
+  </p>
+</section>
+
+<!-- MAIN PLANTS SECTION -->
+<section class="panel">
+  <h2 class="section-title">Your Plants</h2>
+
+  {% if goals and goals|length > 0 %}
+    <div class="grid">
+
+      {% for g in goals %}
+      <div class="card {{ g.stage }}">
+        
+        <!-- TOP OF CARD -->
+        <div class="card-top">
+          
+          <!-- NEW EVOLVING PLANT ICON -->
+          <div class="plant-icon stage-{{ g.stage }}" aria-hidden="true"></div>
+
+          <!-- GOAL TITLE + CATEGORY -->
+          <div class="meta">
+            <h3>{{ g.name }}</h3>
+            <p class="muted">{{ g.category or "General" }}</p>
+          </div>
+        </div>
+
+        <!-- PROGRESS BAR -->
+        <div class="progress-row">
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ g.percentage }}%;"></div>
+          </div>
+          <div class="progress-text">
+            {{ g.current_value }} / {{ g.target_value }} {{ g.unit }} • {{ g.percentage }}%
+          </div>
+        </div>
+
+        <!-- UPDATE FORM -->
+        <form method="POST" action="{{ url_for('update', id=g.id) }}" class="update-form">
+          <input 
+            type="number" 
+            name="current_value" 
+            placeholder="Update progress"
+            min="0"
+            max="{{ g.target_value }}"
+            value="{{ g.current_value }}"
+          >
+          <button class="btn small" type="submit">Update</button>
+        </form>
+
+      </div>
+      {% endfor %}
+
+    </div>
+
+  {% else %}
+    <!-- EMPTY STATE -->
+    <div class="empty-msg">
+      <h3>No goals yet</h3>
+      <p>Add your first seed in <a href="{{ url_for('goals') }}">Manage Goals</a> 🌱</p>
+    </div>
+  {% endif %}
+</section>
+
+{% endblock %}

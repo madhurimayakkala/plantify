@@ -1,0 +1,440 @@
+/* ==========================
+   GLOBAL THEME
+   ========================== */
+:root {
+  --bg: #f8fefb;
+  --bg2: #eefaf5;
+  --card: #ffffff;
+  --muted: #6b7280;
+  --accent: #34d399;
+  --accent-dark: #059669;
+  --shadow: 0 10px 35px rgba(0, 0, 0, 0.06);
+  --radius: 14px;
+  --maxw: 1100px;
+  --font: "Inter", system-ui, sans-serif;
+  --fancy: "Playfair Display", serif;
+}
+
+/* Reset + Body */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: linear-gradient(var(--bg), var(--bg2));
+  font-family: var(--font);
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: var(--maxw);
+  margin: 32px auto;
+  padding: 0 1rem;
+}
+
+/* ==========================
+   NAVBAR
+   ========================== */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: var(--card);
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.leaf {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #a7f3d0, #34d399);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.18);
+}
+
+.title {
+  font-weight: 800;
+  font-size: 1.25rem;
+}
+
+.links a {
+  margin-left: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 8px 12px;
+  color: var(--muted);
+  border-radius: 10px;
+  transition: 0.2s ease;
+}
+
+.links a:hover {
+  background: rgba(16, 185, 129, 0.08);
+  color: #064e3b;
+}
+
+/* ==========================
+   HERO SECTION
+   ========================== */
+.hero {
+  text-align: center;
+  margin-bottom: 30px;
+  animation: fadeUp 0.8s ease forwards;
+}
+
+.hero-title {
+  font-family: var(--fancy);
+  font-size: 2.4rem;
+  margin: 0;
+  color: #064e3b;
+}
+
+.hero-sub {
+  font-size: 1.05rem;
+  color: var(--muted);
+  max-width: 520px;
+  margin: 10px auto 0 auto;
+}
+
+.small-hero {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.small-title {
+  font-size: 2rem;
+}
+
+.small-sub {
+  font-size: 1rem;
+  max-width: 450px;
+}
+
+/* SECTION TITLE */
+.section-title {
+  margin: 22px 0 10px 0;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* ==========================
+   CARD GRID
+   ========================== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-left: 6px solid rgba(0, 0, 0, 0.05);
+  animation: floatIn 0.5s ease both;
+}
+
+/* stages */
+.card.seed { border-left-color: #cbd5e1; }
+.card.sprout { border-left-color: #86efac; }
+.card.baby { border-left-color: #34d399; }
+.card.bloom { border-left-color: #10b981; }
+.card.full { border-left-color: #059669; }
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.meta h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.meta .muted {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* ==========================
+   PLANT ICON
+   ========================== */
+.plant {
+  width: 70px;
+  height: 70px;
+  border-radius: 16px;
+  background: linear-gradient(#eaffe6, #d7f9dd);
+  position: relative;
+}
+
+.stem {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 26px;
+  background: #047857;
+  border-radius: 6px;
+}
+
+.leaf {
+  position: absolute;
+  width: 22px;
+  height: 12px;
+  background: #6ee7b7;
+  border-radius: 999px;
+}
+
+.leaf.left { left: 12px; bottom: 38px; transform: rotate(-18deg); }
+.leaf.right { right: 12px; bottom: 38px; transform: rotate(18deg); }
+
+/* ==========================
+   PROGRESS BAR
+   ========================== */
+.progress-row { display: flex; flex-direction: column; gap: 6px; }
+
+.progress-bar {
+  background: #ecfdf5;
+  border-radius: 999px;
+  height: 12px;
+  overflow: hidden;
+}
+
+.progress-text {
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6ee7b7, #10b981);
+  width: 0;
+  transition: width 0.6s ease;
+}
+
+/* ==========================
+   UPDATE FORM
+   ========================== */
+.update-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.update-form input {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  width: 120px;
+}
+
+/* BUTTONS */
+.btn {
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.btn.small { padding: 7px 10px; font-size: 0.9rem; }
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.22);
+}
+
+/* ==========================
+   EMPTY STATE
+   ========================== */
+.empty-msg {
+  text-align: center;
+  padding: 30px;
+  background: rgba(255,255,255,0.85);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  margin-top: 20px;
+}
+
+.empty-msg a { color: var(--accent-dark); text-decoration: none; }
+
+/* ==========================
+   ADD GOAL FORM (MANAGE PAGE)
+   ========================== */
+.goal-form {
+  background: rgba(255, 255, 255, 0.85);
+  padding: 22px;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.goal-form .form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.goal-form .form-row.duo {
+  flex-direction: row;
+  gap: 18px;
+}
+
+.goal-form .form-row.duo .col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.goal-form input {
+  padding: 12px;
+  font-size: 0.95rem;
+}
+
+/* ==========================
+   TABLE
+   ========================== */
+.table-wrap {
+  margin-top: 20px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+  padding: 12px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  padding: 12px;
+  background: #f1f5f9;
+  font-weight: 700;
+  color: #475569;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  font-size: 0.95rem;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.delete-btn {
+  color: #ef4444;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* ==========================
+   ANIMATIONS
+   ========================== */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes floatIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* ==========================
+   EVOLVING PLANT ICONS (NEW)
+   ========================== */
+
+.plant-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 16px;
+  background: #ecfdf5;
+  position: relative;
+  margin: 0 auto;
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.05);
+}
+
+/* SEED (0–20%) */
+.stage-seed::before {
+  content: "🌰";
+  font-size: 40px;
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* SPROUT (20–40%) */
+.stage-sprout::before {
+  content: "🌱";
+  font-size: 40px;
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* BABY PLANT (40–60%) */
+.stage-baby::before {
+  content: "🌿";
+  font-size: 40px;
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* BLOOMING (60–80%) */
+.stage-bloom::before {
+  content: "🌾";
+  font-size: 40px;
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* FULL TREE (80–100%) */
+.stage-full::before {
+  content: "🌳";
+  font-size: 42px;
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+}

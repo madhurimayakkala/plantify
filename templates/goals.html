@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- HERO / INTRO -->
+<section class="hero small-hero">
+  <h1 class="hero-title small-title">Manage Your Goals ✨</h1>
+  <p class="hero-sub small-sub">Add new goals or tidy up your garden anytime.</p>
+</section>
+
+<!-- ADD GOAL FORM -->
+<section class="panel">
+  <h2 class="section-title">Add a New Goal</h2>
+
+  <form method="POST" class="goal-form" id="add-goal-form" autocomplete="off">
+
+    <div class="form-row">
+      <label for="name">Goal Name</label>
+      <input id="name" name="name" type="text" placeholder="e.g. DSA practice, Running, Reading" required>
+    </div>
+
+    <div class="form-row">
+      <label for="category">Category <span class="muted">(optional)</span></label>
+      <input id="category" name="category" type="text" placeholder="Study, Fitness, Skin, Money">
+    </div>
+
+    <div class="form-row duo">
+      <div class="col">
+        <label for="target_value">Target Value</label>
+        <input id="target_value" name="target_value" type="number" min="1" placeholder="e.g. 100" required>
+        <small class="muted">The total amount you want to reach.</small>
+      </div>
+
+      <div class="col">
+        <label for="unit">Unit</label>
+        <input id="unit" name="unit" list="units" placeholder="e.g. problems, hours, pages" required>
+        <datalist id="units">
+          <option value="problems">
+          <option value="hours">
+          <option value="pages">
+          <option value="km">
+          <option value="₹">
+          <option value="sessions">
+        </datalist>
+        <small class="muted">Pick from suggestions or type your own.</small>
+      </div>
+    </div>
+
+    <button class="btn" type="submit">Add Goal</button>
+  </form>
+</section>
+
+<!-- GOALS TABLE -->
+<section class="panel">
+  <h2 class="section-title">Your Goals</h2>
+
+  {% if goals %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Target</th>
+            <th>Current</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for g in goals %}
+          <tr>
+            <td>{{ g.name }}</td>
+            <td>{{ g.category or '-' }}</td>
+            <td>{{ g.target_value }} {{ g.unit }}</td>
+            <td>{{ g.current_value }}</td>
+            <td>
+              <a class="delete-btn" href="{{ url_for('delete', id=g.id) }}">Delete</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  {% else %}
+    <p class="empty-msg">You haven’t added any goals yet 🌱</p>
+  {% endif %}
+</section>
+
+{% endblock %}
