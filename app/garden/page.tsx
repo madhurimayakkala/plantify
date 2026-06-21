@@ -4,40 +4,85 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 import GardenGrid from "@/components/GardenGrid";
-
-import {
-  getGarden,
-  removeFromGarden,
-  clearGarden,
-} from "@/lib/storage";
-
 import type { GardenEntry } from "@/lib/types";
 
 export default function GardenPage() {
   const [entries, setEntries] = useState<GardenEntry[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setEntries(getGarden());
+    async function loadGarden() {
+      try {
+        const res = await fetch("/api/garden");
+
+        if (!res.ok) {
+          throw new Error("Failed to load garden");
+        }
+
+        const data = await res.json();
+        setEntries(data);
+      } catch (err) {
+        console.error("Failed to load garden:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadGarden();
   }, []);
 
-  const handleDelete = (id: string) => {
-    removeFromGarden(id);
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/garden/${id}`, {
+        method: "DELETE",
+      });
 
-    setEntries((prev) =>
-      prev.filter((entry) => entry.id !== id)
-    );
+      if (!res.ok) {
+        throw new Error("Failed to delete entry");
+      }
+
+      setEntries((prev) =>
+        prev.filter((entry) => entry.id !== id)
+      );
+    } catch (err) {
+      console.error("Failed to delete entry:", err);
+    }
   };
 
-  const handleClearGarden = () => {
+  const handleClearGarden = async () => {
     const confirmed = window.confirm(
       "Clear your entire garden? This cannot be undone."
     );
 
     if (!confirmed) return;
 
-    clearGarden();
-    setEntries([]);
+    try {
+      const res = await fetch("/api/garden", {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to clear garden");
+      }
+
+      setEntries([]);
+    } catch (err) {
+      console.error("Failed to clear garden:", err);
+    }
   };
+
+  if (loading) {
+    return (
+      <main
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "#f8f5ef" }}
+      >
+        <p style={{ color: "#6b5a4a" }}>
+          Loading garden...
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main
@@ -45,8 +90,6 @@ export default function GardenPage() {
       style={{ background: "#f8f5ef" }}
     >
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -71,14 +114,10 @@ export default function GardenPage() {
           </p>
         </motion.div>
 
-        {/* Garden */}
-
         <GardenGrid
           entries={entries}
           onDelete={handleDelete}
         />
-
-        {/* Footer Actions */}
 
         {entries.length > 0 && (
           <motion.div
@@ -100,7 +139,6 @@ export default function GardenPage() {
           </motion.div>
         )}
       </div>
-      
     </main>
   );
 }

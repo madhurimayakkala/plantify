@@ -64,3 +64,29 @@ export async function POST(req: Request) {
 
   return NextResponse.json(data);
 }
+export async function DELETE() {
+const { userId } = await auth();
+
+if (!userId) {
+return NextResponse.json(
+{ error: "Unauthorized" },
+{ status: 401 }
+);
+}
+
+const { error } = await supabase
+.from("garden_entries")
+.delete()
+.eq("user_id", userId);
+
+if (error) {
+return NextResponse.json(
+{ error: error.message },
+{ status: 500 }
+);
+}
+
+return NextResponse.json({
+success: true,
+});
+}

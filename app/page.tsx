@@ -8,12 +8,6 @@ import CreateWorkloadModal from "@/components/CreateWorkloadModal";
 import EndCycleModal from "@/components/EndCycleModal";
 
 import {
-  setActive,
-  clearActive,
-  saveToGarden,
-} from "@/lib/storage";
-
-import {
   calculateWater,
   getPlantInfo,
 } from "@/lib/waterCalc";
@@ -108,8 +102,6 @@ const active = await res.json();
       );
     }
 
-    // temporary backup during migration
-    setActive(updated);
   }
 
   async function saveWorkload(
@@ -193,12 +185,6 @@ const active = await res.json();
           error
         );
       }
-
-      // temporary backup during migration
-      saveToGarden(gardenEntry);
-
-      clearActive();
-
       setWorkloadState(null);
 
       setEndCycleOpen(false);
@@ -241,8 +227,6 @@ const active = await res.json();
           error
         );
       }
-
-      clearActive();
 
       setWorkloadState(null);
 
