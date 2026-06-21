@@ -37,9 +37,14 @@ export default function HomePage() {
   useEffect(() => {
     async function loadWorkload() {
       try {
-        const res = await fetch("/api/workload");
+       const res = await fetch("/api/workload");
 
-        const active = await res.json();
+if (!res.ok) {
+  setCreateOpen(true);
+  return;
+}
+
+const active = await res.json();
 
         if (active) {
           setWorkloadState({
