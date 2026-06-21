@@ -19,8 +19,9 @@ export default function GardenPage() {
           throw new Error("Failed to load garden");
         }
 
-        const data = await res.json();
-        setEntries(data);
+      const data = await res.json();
+      setEntries(data);
+
       } catch (err) {
         console.error("Failed to load garden:", err);
       } finally {

@@ -25,7 +25,18 @@ export async function GET() {
     );
   }
 
-  return NextResponse.json(data);
+  const mapped = data.map((entry) => ({
+  id: entry.id,
+  workloadName: entry.workload_name,
+  savedAt: entry.saved_at,
+  waterPercent: entry.water_percent,
+  stage: entry.stage,
+  stageEmoji: entry.stage_emoji,
+  tasksCompleted: entry.tasks_completed,
+  tasksTotal: entry.tasks_total,
+}));
+
+return NextResponse.json(mapped);
 }
 
 export async function POST(req: Request) {
