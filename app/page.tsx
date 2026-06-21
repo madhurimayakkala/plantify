@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useUser } from "@clerk/nextjs";
 import Navbar from "@/components/Navbar";
 import ActivePlant from "@/components/ActivePlant";
 import WorkloadPanel from "@/components/WorkloadPanel";
@@ -9,7 +8,6 @@ import CreateWorkloadModal from "@/components/CreateWorkloadModal";
 import EndCycleModal from "@/components/EndCycleModal";
 
 import {
-  getActive,
   setActive,
   clearActive,
   saveToGarden,
@@ -27,10 +25,6 @@ import type {
 } from "@/lib/types";
 
 export default function HomePage() {
-  const { user } = useUser();
-
-  console.log("Current User:", user);
-
   const [workload, setWorkloadState] =
     useState<ActiveWorkload | null>(null);
 
@@ -49,10 +43,14 @@ export default function HomePage() {
 
         if (active) {
           setWorkloadState({
+            id:
+              active.id ??
+              crypto.randomUUID(),
             name: active.name,
             tasks: active.tasks,
             startedAt: active.started_at,
-            cumulativeWater: active.cumulative_water,
+            cumulativeWater:
+              active.cumulative_water,
           });
         } else {
           setCreateOpen(true);
@@ -66,42 +64,59 @@ export default function HomePage() {
     loadWorkload();
   }, []);
 
-function updateWorkload(updated: ActiveWorkload) {
+  
+
+  function updateWorkload(
+  updated: ActiveWorkload
+) {
+  console.log("UPDATE FIRED");
+  console.log(updated);
+
   void setWorkload(updated);
 }
+    
+  async function setWorkload(
+    updated: ActiveWorkload
+  ) {
+    setWorkloadState(updated);
 
-async function setWorkload(updated: ActiveWorkload) {
-  setWorkloadState(updated);
+    try {
+      await fetch("/api/workload", {
+        method: "PUT",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify({
+          name: updated.name,
+          tasks: updated.tasks,
+          started_at:
+            updated.startedAt,
+          cumulative_water:
+            updated.cumulativeWater,
+        }),
+      });
+    } catch (error) {
+      console.error(
+        "Failed to save workload:",
+        error
+      );
+    }
 
-  try {
-    await fetch("/api/workload", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: updated.name,
-        tasks: updated.tasks,
-        started_at: updated.startedAt,
-        cumulative_water: updated.cumulativeWater,
-      }),
-    });
-  } catch (error) {
-    console.error("Failed to save workload:", error);
+    // temporary backup during migration
+    setActive(updated);
   }
 
-  // temporary backup during migration
-  setActive(updated);
-}
-
   async function saveWorkload(
-  workloadData: ActiveWorkload
-) {
-  await setWorkload(workloadData);
-  setCreateOpen(false);
-}
+    workloadData: ActiveWorkload
+  ) {
+    await setWorkload(workloadData);
+    setCreateOpen(false);
+  }
 
-  function handleEndChoice(choice: EndCycleChoice) {
+  async function handleEndChoice(
+    choice: EndCycleChoice
+  ) {
     if (!workload) return;
 
     const water = calculateWater(
@@ -112,27 +127,69 @@ async function setWorkload(updated: ActiveWorkload) {
     const plant = getPlantInfo(water);
 
     if (choice === "save_reset") {
-      const totalTasks = workload.tasks.reduce(
-        (sum, task) => sum + task.total,
-        0
-      );
+      const totalTasks =
+        workload.tasks.reduce(
+          (sum, task) =>
+            sum + task.total,
+          0
+        );
 
-      const completedTasks = workload.tasks.reduce(
-        (sum, task) => sum + task.completed,
-        0
-      );
+      const completedTasks =
+        workload.tasks.reduce(
+          (sum, task) =>
+            sum + task.completed,
+          0
+        );
 
-      const gardenEntry: GardenEntry = {
-        id: crypto.randomUUID(),
-        workloadName: workload.name,
-        savedAt: new Date().toISOString(),
-        waterPercent: water,
-        stage: plant.stage,
-        stageEmoji: plant.emoji,
-        tasksCompleted: completedTasks,
-        tasksTotal: totalTasks,
-      };
+      const gardenEntry: GardenEntry =
+        {
+          id: crypto.randomUUID(),
+          workloadName:
+            workload.name,
+          savedAt:
+            new Date().toISOString(),
+          waterPercent: water,
+          stage: plant.stage,
+          stageEmoji:
+            plant.emoji,
+          tasksCompleted:
+            completedTasks,
+          tasksTotal: totalTasks,
+        };
 
+      try {
+        await fetch("/api/garden", {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify(
+            gardenEntry
+          ),
+        });
+      } catch (error) {
+        console.error(
+          "Failed to save garden entry:",
+          error
+        );
+      }
+
+      try {
+        await fetch(
+          "/api/workload",
+          {
+            method: "DELETE",
+          }
+        );
+      } catch (error) {
+        console.error(
+          "Failed to delete workload:",
+          error
+        );
+      }
+
+      // temporary backup during migration
       saveToGarden(gardenEntry);
 
       clearActive();
@@ -145,17 +202,20 @@ async function setWorkload(updated: ActiveWorkload) {
     }
 
     if (choice === "continue") {
-      const currentWater = calculateWater(
-        workload.tasks,
-        workload.cumulativeWater
-      );
+      const currentWater =
+        calculateWater(
+          workload.tasks,
+          workload.cumulativeWater
+        );
 
-      const updated: ActiveWorkload = {
-        ...workload,
-        cumulativeWater: currentWater,
-      };
+      const updated: ActiveWorkload =
+        {
+          ...workload,
+          cumulativeWater:
+            currentWater,
+        };
 
-      setWorkload(updated);
+      await setWorkload(updated);
 
       setEndCycleOpen(false);
 
@@ -163,6 +223,20 @@ async function setWorkload(updated: ActiveWorkload) {
     }
 
     if (choice === "reset") {
+      try {
+        await fetch(
+          "/api/workload",
+          {
+            method: "DELETE",
+          }
+        );
+      } catch (error) {
+        console.error(
+          "Failed to delete workload:",
+          error
+        );
+      }
+
       clearActive();
 
       setWorkloadState(null);
@@ -212,7 +286,8 @@ async function setWorkload(updated: ActiveWorkload) {
             }}
           >
             Water your plant by finishing
-            workloads and growing progress.
+            workloads and growing
+            progress.
           </p>
         </div>
 
@@ -237,7 +312,9 @@ async function setWorkload(updated: ActiveWorkload) {
       <CreateWorkloadModal
         open={createOpen}
         existingWorkload={workload}
-        onClose={() => setCreateOpen(false)}
+        onClose={() =>
+          setCreateOpen(false)
+        }
         onSave={saveWorkload}
       />
 
@@ -248,6 +325,7 @@ async function setWorkload(updated: ActiveWorkload) {
           setEndCycleOpen(false)
         }
         onChoose={handleEndChoice}
+        
       />
     </main>
   );

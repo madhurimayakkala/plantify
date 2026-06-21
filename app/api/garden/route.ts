@@ -13,22 +13,22 @@ export async function GET() {
   }
 
   const { data, error } = await supabase
-    .from("active_workloads")
+    .from("garden_entries")
     .select("*")
     .eq("user_id", userId)
-    .single();
+    .order("saved_at", { ascending: false });
 
-  if (error && error.code !== "PGRST116") {
+  if (error) {
     return NextResponse.json(
       { error: error.message },
       { status: 500 }
     );
   }
 
-  return NextResponse.json(data ?? null);
+  return NextResponse.json(data);
 }
 
-export async function PUT(req: Request) {
+export async function POST(req: Request) {
   const { userId } = await auth();
 
   if (!userId) {
@@ -39,16 +39,18 @@ export async function PUT(req: Request) {
   }
 
   const body = await req.json();
-console.log("WORKLOAD BODY:", body);
+
   const { data, error } = await supabase
-    .from("active_workloads")
-    .upsert({
+    .from("garden_entries")
+    .insert({
       user_id: userId,
-      name: body.name,
-      tasks: body.tasks,
-      started_at: body.started_at,
-      cumulative_water: body.cumulative_water,
-      updated_at: new Date().toISOString(),
+      workload_name: body.workloadName,
+      stage: body.stage,
+      stage_emoji: body.stageEmoji,
+      water_percent: body.waterPercent,
+      tasks_completed: body.tasksCompleted,
+      tasks_total: body.tasksTotal,
+      saved_at: body.savedAt,
     })
     .select()
     .single();
