@@ -49,25 +49,45 @@ export default function GardenGrid({ entries, onDelete }: Props) {
         className="flex gap-4 mb-6 flex-wrap"
       >
         {[
-          {
-            label: "Plants Saved",
-            value: entries.length,
-            color: "#3d6b35",
-            bg: "#eaf5e9",
-          },
-          {
-            label: "Avg Water",
-            value: `${Math.round(entries.reduce((s, e) => s + e.waterPercent, 0) / entries.length)}%`,
-            color: "#a8d5e2",
-            bg: "#eaf4f8",
-          },
-          {
-            label: "Tasks Done",
-            value: entries.reduce((s, e) => s + e.tasksCompleted, 0),
-            color: "#7cb87a",
-            bg: "#f0f9ef",
-          },
-        ].map((stat) => (
+  {
+    label: "Plants Saved",
+    value: entries.length,
+    color: "#3d6b35",
+    bg: "#eaf5e9",
+  },
+  {
+    label: "Avg Growth",
+   value:
+  entries.length > 0
+    ? `${Math.round(
+        entries.reduce(
+          (s, e) => s + e.waterPercent,
+          0
+        ) / entries.length
+      )}%`
+    : "0%",
+    color: "#a8d5e2",
+    bg: "#eaf4f8",
+  },
+  {
+    label: "Tasks Done",
+    value: entries.reduce(
+      (s, e) => s + e.tasksCompleted,
+      0
+    ),
+    color: "#7cb87a",
+    bg: "#f0f9ef",
+  },
+  {
+    label: "Best Plant",
+    value:
+      [...entries].sort(
+        (a, b) => b.waterPercent - a.waterPercent
+      )[0]?.stageEmoji ?? "🌱",
+    color: "#d9a441",
+    bg: "#fff8e7",
+  },
+].map((stat) => (
           <div
             key={stat.label}
             className="px-5 py-3 rounded-xl flex flex-col"

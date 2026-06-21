@@ -5,6 +5,11 @@ import { usePathname } from "next/navigation";
 import { Leaf } from "lucide-react";
 import { motion } from "framer-motion";
 
+import {
+  SignInButton,
+  SignUpButton,
+} from "@clerk/nextjs";
+
 export default function Navbar() {
   const pathname = usePathname();
 
@@ -15,7 +20,10 @@ export default function Navbar() {
 
   return (
     <nav
-      style={{ background: "#fefcf7", borderBottom: "1px solid #e8e0d5" }}
+      style={{
+        background: "#fefcf7",
+        borderBottom: "1px solid #e8e0d5",
+      }}
       className="sticky top-0 z-50"
     >
       <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -25,44 +33,97 @@ export default function Navbar() {
             whileHover={{ rotate: [0, -10, 10, 0] }}
             transition={{ duration: 0.4 }}
             className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #7cb87a, #3d6b35)" }}
+            style={{
+              background:
+                "linear-gradient(135deg, #7cb87a, #3d6b35)",
+            }}
           >
-            <Leaf size={18} color="#fefcf7" strokeWidth={2.5} />
+            <Leaf
+              size={18}
+              color="#fefcf7"
+              strokeWidth={2.5}
+            />
           </motion.div>
+
           <span
             className="font-bold text-lg tracking-tight"
-            style={{ color: "#2d1b0e", fontFamily: "'Lora', Georgia, serif" }}
+            style={{
+              color: "#2d1b0e",
+              fontFamily: "'Lora', Georgia, serif",
+            }}
           >
             Plantify
           </span>
         </Link>
 
-        {/* Nav links */}
-        <div className="flex items-center gap-1">
-          {links.map((link) => {
-            const active = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="relative px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        <div className="flex items-center gap-4">
+          {/* Nav Links */}
+          <div className="flex items-center gap-1">
+            {links.map((link) => {
+              const active = pathname === link.href;
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="relative px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  style={{
+                    color: active
+                      ? "#3d6b35"
+                      : "#6b5a4a",
+                    background: active
+                      ? "#eaf5e9"
+                      : "transparent",
+                  }}
+                >
+                  {link.label}
+
+                  {active && (
+                    <motion.div
+                      layoutId="nav-indicator"
+                      className="absolute inset-0 rounded-lg"
+                      style={{
+                        background: "#eaf5e9",
+                        zIndex: -1,
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 35,
+                      }}
+                    />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Clerk Auth */}
+          <div className="flex items-center gap-2">
+            <SignInButton>
+              <button
+                className="px-4 py-2 rounded-lg text-sm font-medium"
                 style={{
-                  color: active ? "#3d6b35" : "#6b5a4a",
-                  background: active ? "#eaf5e9" : "transparent",
+                  background: "#f3f0ea",
+                  color: "#6b5a4a",
                 }}
               >
-                {link.label}
-                {active && (
-                  <motion.div
-                    layoutId="nav-indicator"
-                    className="absolute inset-0 rounded-lg"
-                    style={{ background: "#eaf5e9", zIndex: -1 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 35 }}
-                  />
-                )}
-              </Link>
-            );
-          })}
+                Sign In
+              </button>
+            </SignInButton>
+
+            <SignUpButton>
+              <button
+                className="px-4 py-2 rounded-lg text-sm font-medium"
+                style={{
+                  background: "#3d6b35",
+                  color: "#ffffff",
+                }}
+              >
+                Sign Up
+              </button>
+            </SignUpButton>
+          </div>
         </div>
       </div>
     </nav>

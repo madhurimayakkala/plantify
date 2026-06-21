@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
+import { useUser } from "@clerk/nextjs";
 import Navbar from "@/components/Navbar";
 import ActivePlant from "@/components/ActivePlant";
 import WorkloadPanel from "@/components/WorkloadPanel";
@@ -27,6 +27,10 @@ import type {
 } from "@/lib/types";
 
 export default function HomePage() {
+  const { user } = useUser();
+
+  console.log("Current User:", user);
+
   const [workload, setWorkloadState] =
     useState<ActiveWorkload | null>(null);
 
@@ -37,29 +41,65 @@ export default function HomePage() {
     useState(false);
 
   useEffect(() => {
-    const active = getActive();
+    async function loadWorkload() {
+      try {
+        const res = await fetch("/api/workload");
 
-    if (active) {
-      setWorkloadState(active);
-    } else {
-      setCreateOpen(true);
+        const active = await res.json();
+
+        if (active) {
+          setWorkloadState({
+            name: active.name,
+            tasks: active.tasks,
+            startedAt: active.started_at,
+            cumulativeWater: active.cumulative_water,
+          });
+        } else {
+          setCreateOpen(true);
+        }
+      } catch (error) {
+        console.error(error);
+        setCreateOpen(true);
+      }
     }
+
+    loadWorkload();
   }, []);
 
-  function updateWorkload(updated: ActiveWorkload) {
-    setWorkload(updated);
-    setActive(updated);
+function updateWorkload(updated: ActiveWorkload) {
+  void setWorkload(updated);
+}
+
+async function setWorkload(updated: ActiveWorkload) {
+  setWorkloadState(updated);
+
+  try {
+    await fetch("/api/workload", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: updated.name,
+        tasks: updated.tasks,
+        started_at: updated.startedAt,
+        cumulative_water: updated.cumulativeWater,
+      }),
+    });
+  } catch (error) {
+    console.error("Failed to save workload:", error);
   }
 
-  function setWorkload(updated: ActiveWorkload) {
-    setWorkloadState(updated);
-    setActive(updated);
-  }
+  // temporary backup during migration
+  setActive(updated);
+}
 
-  function saveWorkload(workloadData: ActiveWorkload) {
-    setWorkload(workloadData);
-    setCreateOpen(false);
-  }
+  async function saveWorkload(
+  workloadData: ActiveWorkload
+) {
+  await setWorkload(workloadData);
+  setCreateOpen(false);
+}
 
   function handleEndChoice(choice: EndCycleChoice) {
     if (!workload) return;
