@@ -154,23 +154,25 @@ const active = await res.json();
           tasksTotal: totalTasks,
         };
 
-      try {
-        await fetch("/api/garden", {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify(
-            gardenEntry
-          ),
-        });
-      } catch (error) {
-        console.error(
-          "Failed to save garden entry:",
-          error
-        );
-      }
+     try {
+  const res = await fetch("/api/garden", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(gardenEntry),
+  });
+
+  console.log("Garden save status:", res.status);
+
+  const data = await res.text();
+  console.log("Garden save response:", data);
+} catch (error) {
+  console.error(
+    "Failed to save garden entry:",
+    error
+  );
+}
 
       try {
         await fetch(
