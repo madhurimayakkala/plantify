@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Archive, RefreshCw, Sprout, X } from "lucide-react";
 import type { ActiveWorkload, EndCycleChoice } from "@/lib/types";
@@ -9,7 +10,7 @@ interface Props {
   open: boolean;
   workload: ActiveWorkload | null;
   onClose: () => void;
-  onChoose: (choice: EndCycleChoice) => void;
+  onChoose: (choice: EndCycleChoice) => void | Promise<void>;
 }
 
 interface OptionCard {
@@ -22,6 +23,13 @@ interface OptionCard {
 }
 
 export default function EndCycleModal({ open, workload, onClose, onChoose }: Props) {
+  const [processing, setProcessing] = useState(false);
+
+  // Reset the processing state whenever the modal is (re)opened
+  useEffect(() => {
+    if (open) setProcessing(false);
+  }, [open]);
+
   const water = workload ? calculateWater(workload.tasks, workload.cumulativeWater) : 0;
   const plant = getPlantInfo(water);
 
@@ -55,6 +63,15 @@ export default function EndCycleModal({ open, workload, onClose, onChoose }: Pro
     },
   ];
 
+  async function handleChoose(choice: EndCycleChoice) {
+    if (processing) return;
+    setProcessing(true);
+    await onChoose(choice);
+    // Don't reset `processing` here on purpose — the parent closes this
+    // modal on success, and the `open` effect above resets state cleanly
+    // the next time it's opened.
+  }
+
   return (
     <AnimatePresence>
       {open && (
@@ -63,7 +80,7 @@ export default function EndCycleModal({ open, workload, onClose, onChoose }: Pro
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={processing ? undefined : onClose}
             className="fixed inset-0 z-40"
             style={{ background: "rgba(45,27,14,0.4)", backdropFilter: "blur(4px)" }}
           />
@@ -114,7 +131,9 @@ export default function EndCycleModal({ open, workload, onClose, onChoose }: Pro
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  disabled={processing}
+                  aria-label="Close"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-40"
                   style={{ background: "#f0e8e0", color: "#5a3e2b" }}
                 >
                   <X size={15} />
@@ -129,10 +148,11 @@ export default function EndCycleModal({ open, workload, onClose, onChoose }: Pro
                     initial={{ opacity: 0, x: -12 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.07 }}
-                    whileHover={{ scale: 1.015 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => onChoose(opt.choice)}
-                    className="w-full flex items-start gap-4 p-4 rounded-xl text-left transition-shadow"
+                    whileHover={processing ? undefined : { scale: 1.015 }}
+                    whileTap={processing ? undefined : { scale: 0.98 }}
+                    onClick={() => handleChoose(opt.choice)}
+                    disabled={processing}
+                    className="w-full flex items-start gap-4 p-4 rounded-xl text-left transition-shadow disabled:opacity-50"
                     style={{
                       background: opt.bg,
                       border: `1.5px solid ${opt.accent}22`,
@@ -162,7 +182,8 @@ export default function EndCycleModal({ open, workload, onClose, onChoose }: Pro
               <div className="px-6 pb-5">
                 <button
                   onClick={onClose}
-                  className="w-full py-2.5 rounded-xl text-sm font-medium"
+                  disabled={processing}
+                  className="w-full py-2.5 rounded-xl text-sm font-medium disabled:opacity-40"
                   style={{ color: "#9b8878", background: "#f0e8e0" }}
                 >
                   Keep working

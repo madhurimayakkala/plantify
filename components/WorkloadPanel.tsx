@@ -156,6 +156,7 @@ export default function WorkloadPanel({
                       disabled={
                         task.completed === 0
                       }
+                      aria-label={`Decrease ${task.name} progress`}
                       className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30"
                       style={{
                         background:
@@ -192,6 +193,7 @@ export default function WorkloadPanel({
                         task.completed ===
                         task.total
                       }
+                      aria-label={`Increase ${task.name} progress`}
                       className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30"
                       style={{
                         background:

@@ -1,17 +1,27 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Leaf } from "lucide-react";
+import { Leaf, Sprout } from "lucide-react";
 import { motion } from "framer-motion";
 
 import {
   SignInButton,
   SignUpButton,
+  Show,
+  UserButton,
 } from "@clerk/nextjs";
+
+import { isGuestMode } from "@/lib/guestStorage";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const [guest, setGuest] = useState(false);
+
+  useEffect(() => {
+    setGuest(isGuestMode());
+  }, [pathname]);
 
   const links = [
     { href: "/", label: "Dashboard" },
@@ -34,15 +44,10 @@ export default function Navbar() {
             transition={{ duration: 0.4 }}
             className="w-9 h-9 rounded-xl flex items-center justify-center"
             style={{
-              background:
-                "linear-gradient(135deg, #7cb87a, #3d6b35)",
+              background: "linear-gradient(135deg, #7cb87a, #3d6b35)",
             }}
           >
-            <Leaf
-              size={18}
-              color="#fefcf7"
-              strokeWidth={2.5}
-            />
+            <Leaf size={18} color="#fefcf7" strokeWidth={2.5} />
           </motion.div>
 
           <span
@@ -68,12 +73,8 @@ export default function Navbar() {
                   href={link.href}
                   className="relative px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                   style={{
-                    color: active
-                      ? "#3d6b35"
-                      : "#6b5a4a",
-                    background: active
-                      ? "#eaf5e9"
-                      : "transparent",
+                    color: active ? "#3d6b35" : "#6b5a4a",
+                    background: active ? "#eaf5e9" : "transparent",
                   }}
                 >
                   {link.label}
@@ -100,29 +101,51 @@ export default function Navbar() {
 
           {/* Clerk Auth */}
           <div className="flex items-center gap-2">
-            <SignInButton>
-              <button
-                className="px-4 py-2 rounded-lg text-sm font-medium"
-                style={{
-                  background: "#f3f0ea",
-                  color: "#6b5a4a",
-                }}
-              >
-                Sign In
-              </button>
-            </SignInButton>
+            <Show when="signed-in">
+              <UserButton />
+            </Show>
 
-            <SignUpButton>
-              <button
-                className="px-4 py-2 rounded-lg text-sm font-medium"
-                style={{
-                  background: "#3d6b35",
-                  color: "#ffffff",
-                }}
-              >
-                Sign Up
-              </button>
-            </SignUpButton>
+            <Show when="signed-out">
+              <div className="flex items-center gap-2">
+                {guest && (
+                  <span
+                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                    style={{
+                      background: "#fff8e7",
+                      color: "#9b7b2e",
+                      border: "1px solid #f0dfa8",
+                    }}
+                  >
+                    <Sprout size={13} />
+                    Guest Mode
+                  </span>
+                )}
+
+                <SignInButton mode="modal">
+                  <button
+                    className="px-4 py-2 rounded-lg text-sm font-medium"
+                    style={{
+                      background: "#f3f0ea",
+                      color: "#6b5a4a",
+                    }}
+                  >
+                    Sign In
+                  </button>
+                </SignInButton>
+
+                <SignUpButton mode="modal">
+                  <button
+                    className="px-4 py-2 rounded-lg text-sm font-medium"
+                    style={{
+                      background: "#3d6b35",
+                      color: "#ffffff",
+                    }}
+                  >
+                    {guest ? "Save Progress" : "Sign Up"}
+                  </button>
+                </SignUpButton>
+              </div>
+            </Show>
           </div>
         </div>
       </div>

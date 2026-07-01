@@ -1,38 +1,31 @@
-import { auth } from "@clerk/nextjs/server";
+// app/api/garden/[id]/route.ts
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { requireUser } from "@/lib/api-auth";
 
 export async function DELETE(
-req: Request,
-context: {
-params: Promise<{ id: string }>;
-}
+  req: Request,
+  context: {
+    params: Promise<{ id: string }>;
+  }
 ) {
-const { userId } = await auth();
+  const { userId, error: authError } = await requireUser();
+  if (authError) return authError;
 
-if (!userId) {
-return NextResponse.json(
-{ error: "Unauthorized" },
-{ status: 401 }
-);
-}
+  const { id } = await context.params;
 
-const { id } = await context.params;
+  const { error } = await supabase
+    .from("garden_entries")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
 
-const { error } = await supabase
-.from("garden_entries")
-.delete()
-.eq("id", id)
-.eq("user_id", userId);
+  if (error) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
+  }
 
-if (error) {
-return NextResponse.json(
-{ error: error.message },
-{ status: 500 }
-);
-}
-
-return NextResponse.json({
-success: true,
-});
+  return NextResponse.json({ success: true });
 }

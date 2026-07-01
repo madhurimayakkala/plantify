@@ -1,16 +1,12 @@
-import { auth } from "@clerk/nextjs/server";
+// app/api/garden/route.ts
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { requireUser } from "@/lib/api-auth";
+import { parseAndValidate, gardenPostSchema } from "@/lib/validation";
 
 export async function GET() {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+  const { userId, error: authError } = await requireUser();
+  if (authError) return authError;
 
   const { data, error } = await supabase
     .from("garden_entries")
@@ -26,30 +22,28 @@ export async function GET() {
   }
 
   const mapped = data.map((entry) => ({
-  id: entry.id,
-  workloadName: entry.workload_name,
-  savedAt: entry.saved_at,
-  waterPercent: entry.water_percent,
-  stage: entry.stage,
-  stageEmoji: entry.stage_emoji,
-  tasksCompleted: entry.tasks_completed,
-  tasksTotal: entry.tasks_total,
-}));
+    id: entry.id,
+    workloadName: entry.workload_name,
+    savedAt: entry.saved_at,
+    waterPercent: entry.water_percent,
+    stage: entry.stage,
+    stageEmoji: entry.stage_emoji,
+    tasksCompleted: entry.tasks_completed,
+    tasksTotal: entry.tasks_total,
+  }));
 
-return NextResponse.json(mapped);
+  return NextResponse.json(mapped);
 }
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
+  const { userId, error: authError } = await requireUser();
+  if (authError) return authError;
 
-  if (!userId) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
-
-  const body = await req.json();
+  const { data: body, error: validationError } = await parseAndValidate(
+    req,
+    gardenPostSchema
+  );
+  if (validationError) return validationError;
 
   const { data, error } = await supabase
     .from("garden_entries")
@@ -75,29 +69,22 @@ export async function POST(req: Request) {
 
   return NextResponse.json(data);
 }
+
 export async function DELETE() {
-const { userId } = await auth();
+  const { userId, error: authError } = await requireUser();
+  if (authError) return authError;
 
-if (!userId) {
-return NextResponse.json(
-{ error: "Unauthorized" },
-{ status: 401 }
-);
-}
+  const { error } = await supabase
+    .from("garden_entries")
+    .delete()
+    .eq("user_id", userId);
 
-const { error } = await supabase
-.from("garden_entries")
-.delete()
-.eq("user_id", userId);
+  if (error) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
+  }
 
-if (error) {
-return NextResponse.json(
-{ error: error.message },
-{ status: 500 }
-);
-}
-
-return NextResponse.json({
-success: true,
-});
+  return NextResponse.json({ success: true });
 }

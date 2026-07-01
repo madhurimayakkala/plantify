@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Trash2 } from "lucide-react";
+import { X, Plus, Trash2, Loader2 } from "lucide-react";
 import type { ActiveWorkload, Task } from "@/lib/types";
 
 interface DraftTask {
@@ -15,7 +15,7 @@ interface Props {
   open: boolean;
   existingWorkload: ActiveWorkload | null;
   onClose: () => void;
-  onSave: (workload: ActiveWorkload) => void;
+  onSave: (workload: ActiveWorkload) => void | Promise<void>;
 }
 
 function uid() {
@@ -30,12 +30,14 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
   const [name, setName] = useState("");
   const [tasks, setTasks] = useState<DraftTask[]>([emptyTask()]);
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   // Reset form when modal opens
   const handleOpen = useCallback(() => {
     setName("");
     setTasks([emptyTask()]);
     setError("");
+    setSubmitting(false);
   }, []);
 
   // Called when AnimatePresence triggers entry
@@ -53,7 +55,9 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
     );
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
+    if (submitting) return;
+
     if (!name.trim()) {
       setError("Workload name is required.");
       return;
@@ -85,9 +89,15 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
       cumulativeWater: existingWorkload?.cumulativeWater ?? 0,
     };
 
-    onSave(workload);
-    setName("");
-    setTasks([emptyTask()]);
+    setSubmitting(true);
+
+    try {
+      await onSave(workload);
+      setName("");
+      setTasks([emptyTask()]);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -99,7 +109,7 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={submitting ? undefined : onClose}
             className="fixed inset-0 z-40"
             style={{ background: "rgba(45,27,14,0.35)", backdropFilter: "blur(3px)" }}
           />
@@ -142,7 +152,9 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                  disabled={submitting}
+                  aria-label="Close"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors disabled:opacity-40"
                   style={{ background: "#f0e8e0", color: "#5a3e2b" }}
                 >
                   <X size={16} />
@@ -155,17 +167,20 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
                 {!existingWorkload && (
                   <div className="flex flex-col gap-1.5">
                     <label
+                      htmlFor="workload-name"
                       className="text-sm font-semibold"
                       style={{ color: "#2d1b0e" }}
                     >
                       Workload Name
                     </label>
                     <input
+                      id="workload-name"
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. DSA Midterm Prep"
-                      className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-shadow"
+                      disabled={submitting}
+                      className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-shadow disabled:opacity-60"
                       style={{
                         background: "#f4faf2",
                         border: "1.5px solid #c8e6c0",
@@ -179,9 +194,9 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
 
                 {/* Tasks */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold" style={{ color: "#2d1b0e" }}>
+                  <span className="text-sm font-semibold" style={{ color: "#2d1b0e" }}>
                     Tasks
-                  </label>
+                  </span>
 
                   <AnimatePresence initial={false}>
                     {tasks.map((task, i) => (
@@ -199,7 +214,9 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
                             value={task.name}
                             onChange={(e) => updateTask(task.id, "name", e.target.value)}
                             placeholder={`Task ${i + 1} name`}
-                            className="flex-1 px-3 py-2 rounded-xl text-sm outline-none"
+                            disabled={submitting}
+                            aria-label={`Task ${i + 1} name`}
+                            className="flex-1 px-3 py-2 rounded-xl text-sm outline-none disabled:opacity-60"
                             style={{
                               background: "#f4faf2",
                               border: "1.5px solid #c8e6c0",
@@ -212,7 +229,9 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
                             onChange={(e) => updateTask(task.id, "total", e.target.value)}
                             placeholder="Total"
                             min={1}
-                            className="w-20 px-3 py-2 rounded-xl text-sm outline-none text-center"
+                            disabled={submitting}
+                            aria-label={`Task ${i + 1} total`}
+                            className="w-20 px-3 py-2 rounded-xl text-sm outline-none text-center disabled:opacity-60"
                             style={{
                               background: "#f4faf2",
                               border: "1.5px solid #c8e6c0",
@@ -221,7 +240,8 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
                           />
                           <button
                             onClick={() => removeTask(task.id)}
-                            disabled={tasks.length === 1}
+                            disabled={tasks.length === 1 || submitting}
+                            aria-label={`Remove task ${i + 1}`}
                             className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors disabled:opacity-30"
                             style={{ background: "#fde8e8", color: "#b34343" }}
                           >
@@ -234,7 +254,8 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
 
                   <button
                     onClick={addTask}
-                    className="flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-xl mt-1 transition-colors self-start"
+                    disabled={submitting}
+                    className="flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-xl mt-1 transition-colors self-start disabled:opacity-40"
                     style={{ color: "#3d6b35", background: "#eaf5e9" }}
                   >
                     <Plus size={14} />
@@ -247,6 +268,7 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
+                    role="alert"
                     className="text-xs px-3 py-2 rounded-lg"
                     style={{ background: "#fde8e8", color: "#b34343" }}
                   >
@@ -262,23 +284,30 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
               >
                 <button
                   onClick={onClose}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors"
+                  disabled={submitting}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors disabled:opacity-40"
                   style={{ border: "1.5px solid #e8e0d5", color: "#5a3e2b" }}
                 >
                   Cancel
                 </button>
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
+                  whileHover={submitting ? undefined : { scale: 1.02 }}
+                  whileTap={submitting ? undefined : { scale: 0.97 }}
                   onClick={handleSubmit}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold"
+                  disabled={submitting}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-70"
                   style={{
                     background: "linear-gradient(135deg, #7cb87a, #3d6b35)",
                     color: "#fefcf7",
                     boxShadow: "0 4px 14px rgba(61,107,53,0.28)",
                   }}
                 >
-                  {existingWorkload ? "Add Tasks" : "Plant Seed"}
+                  {submitting && <Loader2 size={14} className="animate-spin" />}
+                  {submitting
+                    ? "Saving..."
+                    : existingWorkload
+                    ? "Add Tasks"
+                    : "Plant Seed"}
                 </motion.button>
               </div>
             </div>

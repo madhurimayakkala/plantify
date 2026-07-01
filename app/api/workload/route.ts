@@ -1,16 +1,12 @@
-import { auth } from "@clerk/nextjs/server";
+// app/api/workload/route.ts
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { requireUser } from "@/lib/api-auth";
+import { parseAndValidate, workloadPutSchema } from "@/lib/validation";
 
 export async function GET() {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+  const { userId, error: authError } = await requireUser();
+  if (authError) return authError;
 
   const { data, error } = await supabase
     .from("active_workloads")
@@ -29,17 +25,15 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  const { userId } = await auth();
+  const { userId, error: authError } = await requireUser();
+  if (authError) return authError;
 
-  if (!userId) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+  const { data: body, error: validationError } = await parseAndValidate(
+    req,
+    workloadPutSchema
+  );
+  if (validationError) return validationError;
 
-  const body = await req.json();
-console.log("WORKLOAD BODY:", body);
   const { data, error } = await supabase
     .from("active_workloads")
     .upsert({
@@ -62,29 +56,22 @@ console.log("WORKLOAD BODY:", body);
 
   return NextResponse.json(data);
 }
+
 export async function DELETE() {
-const { userId } = await auth();
+  const { userId, error: authError } = await requireUser();
+  if (authError) return authError;
 
-if (!userId) {
-return NextResponse.json(
-{ error: "Unauthorized" },
-{ status: 401 }
-);
-}
+  const { error } = await supabase
+    .from("active_workloads")
+    .delete()
+    .eq("user_id", userId);
 
-const { error } = await supabase
-.from("active_workloads")
-.delete()
-.eq("user_id", userId);
+  if (error) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
+  }
 
-if (error) {
-return NextResponse.json(
-{ error: error.message },
-{ status: 500 }
-);
-}
-
-return NextResponse.json({
-success: true,
-});
+  return NextResponse.json({ success: true });
 }

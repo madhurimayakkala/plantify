@@ -2,16 +2,37 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useUser } from "@clerk/nextjs";
+import { toast } from "sonner";
 
+import Navbar from "@/components/Navbar";
 import GardenGrid from "@/components/GardenGrid";
 import type { GardenEntry } from "@/lib/types";
 
+import {
+  isGuestMode,
+  getGuestGarden,
+  deleteGuestGardenEntry,
+  clearGuestGarden,
+} from "@/lib/guestStorage";
+
 export default function GardenPage() {
+  const { isSignedIn } = useUser();
   const [entries, setEntries] = useState<GardenEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [guest, setGuest] = useState(false);
 
   useEffect(() => {
+    const guestActive = isGuestMode() && !isSignedIn;
+    setGuest(guestActive);
+
     async function loadGarden() {
+      if (guestActive) {
+        setEntries(getGuestGarden());
+        setLoading(false);
+        return;
+      }
+
       try {
         const res = await fetch("/api/garden");
 
@@ -24,15 +45,29 @@ export default function GardenPage() {
 
       } catch (err) {
         console.error("Failed to load garden:", err);
+        toast.error("Couldn't load your garden", {
+          description: "Check your connection and try again.",
+        });
       } finally {
         setLoading(false);
       }
     }
 
     loadGarden();
-  }, []);
+  }, [isSignedIn]);
 
   const handleDelete = async (id: string) => {
+    if (guest) {
+      deleteGuestGardenEntry(id);
+      setEntries((prev) =>
+        prev.filter((entry) => entry.id !== id)
+      );
+      return;
+    }
+
+    const previous = entries;
+    setEntries((prev) => prev.filter((entry) => entry.id !== id));
+
     try {
       const res = await fetch(`/api/garden/${id}`, {
         method: "DELETE",
@@ -41,12 +76,12 @@ export default function GardenPage() {
       if (!res.ok) {
         throw new Error("Failed to delete entry");
       }
-
-      setEntries((prev) =>
-        prev.filter((entry) => entry.id !== id)
-      );
     } catch (err) {
       console.error("Failed to delete entry:", err);
+      setEntries(previous);
+      toast.error("Couldn't delete that plant", {
+        description: "Please try again.",
+      });
     }
   };
 
@@ -57,6 +92,15 @@ export default function GardenPage() {
 
     if (!confirmed) return;
 
+    if (guest) {
+      clearGuestGarden();
+      setEntries([]);
+      return;
+    }
+
+    const previous = entries;
+    setEntries([]);
+
     try {
       const res = await fetch("/api/garden", {
         method: "DELETE",
@@ -65,10 +109,12 @@ export default function GardenPage() {
       if (!res.ok) {
         throw new Error("Failed to clear garden");
       }
-
-      setEntries([]);
     } catch (err) {
       console.error("Failed to clear garden:", err);
+      setEntries(previous);
+      toast.error("Couldn't clear your garden", {
+        description: "Please try again.",
+      });
     }
   };
 
@@ -87,10 +133,12 @@ export default function GardenPage() {
 
   return (
     <main
-      className="min-h-screen px-6 py-10 md:px-10"
+      className="min-h-screen"
       style={{ background: "#f8f5ef" }}
     >
-      <div className="max-w-7xl mx-auto">
+      <Navbar />
+
+      <div className="max-w-7xl mx-auto px-6 py-10 md:px-10">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}

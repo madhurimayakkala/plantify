@@ -1,7 +1,12 @@
+// app/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useUser } from "@clerk/nextjs";
+import { toast } from "sonner";
+
 import Navbar from "@/components/Navbar";
+import WelcomeScreen from "@/components/WelcomeScreen";
 import ActivePlant from "@/components/ActivePlant";
 import WorkloadPanel from "@/components/WorkloadPanel";
 import CreateWorkloadModal from "@/components/CreateWorkloadModal";
@@ -12,13 +17,29 @@ import {
   getPlantInfo,
 } from "@/lib/waterCalc";
 
+import {
+  isGuestMode,
+  enableGuestMode,
+  getGuestWorkload,
+  setGuestWorkload,
+  deleteGuestWorkload,
+  addGuestGardenEntry,
+} from "@/lib/guestStorage";
+
 import type {
   ActiveWorkload,
   EndCycleChoice,
   GardenEntry,
 } from "@/lib/types";
 
+const WORKLOAD_SAVE_DEBOUNCE_MS = 500;
+
 export default function HomePage() {
+  const { isLoaded, isSignedIn } = useUser();
+
+  const [guestChecked, setGuestChecked] = useState(false);
+  const [guest, setGuest] = useState(false);
+
   const [workload, setWorkloadState] =
     useState<ActiveWorkload | null>(null);
 
@@ -28,20 +49,49 @@ export default function HomePage() {
   const [endCycleOpen, setEndCycleOpen] =
     useState(false);
 
+  // Last state we know is actually persisted (server or guest storage).
+  // Used to roll the UI back if a save fails.
+  const lastSyncedRef = useRef<ActiveWorkload | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Check for a local guest session once on mount (client-only, avoids hydration mismatch)
   useEffect(() => {
+    setGuest(isGuestMode());
+    setGuestChecked(true);
+  }, []);
+
+  const usingGuestData = guest && !isSignedIn;
+
+  useEffect(() => {
+    if (!isLoaded || !guestChecked) return;
+    if (!isSignedIn && !guest) return; // nothing to load yet, still on the welcome screen
+
     async function loadWorkload() {
-      try {
-       const res = await fetch("/api/workload");
-
-if (!res.ok) {
-  setCreateOpen(true);
-  return;
-}
-
-const active = await res.json();
+      if (usingGuestData) {
+        const active = getGuestWorkload();
 
         if (active) {
-          setWorkloadState({
+          setWorkloadState(active);
+          lastSyncedRef.current = active;
+        } else {
+          setCreateOpen(true);
+        }
+
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/workload");
+
+        if (!res.ok) {
+          setCreateOpen(true);
+          return;
+        }
+
+        const active = await res.json();
+
+        if (active) {
+          const loaded: ActiveWorkload = {
             id:
               active.id ??
               crypto.randomUUID(),
@@ -50,58 +100,104 @@ const active = await res.json();
             startedAt: active.started_at,
             cumulativeWater:
               active.cumulative_water,
-          });
+          };
+
+          setWorkloadState(loaded);
+          lastSyncedRef.current = loaded;
         } else {
           setCreateOpen(true);
         }
       } catch (error) {
-        console.error(error);
+        console.error("Failed to load workload:", error);
+        toast.error("Couldn't load your workload", {
+          description: "Check your connection and refresh the page.",
+        });
         setCreateOpen(true);
       }
     }
 
     loadWorkload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, guestChecked, isSignedIn, guest]);
+
+  // Clear any pending debounced save if the component unmounts mid-type.
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, []);
 
-  
-
-  function updateWorkload(
-  updated: ActiveWorkload
-) {
-  console.log("UPDATE FIRED");
-  console.log(updated);
-
-  void setWorkload(updated);
-}
-    
-  async function setWorkload(
-    updated: ActiveWorkload
+  async function persistWorkload(
+    updated: ActiveWorkload,
+    { onFailRetry }: { onFailRetry: () => void }
   ) {
-    setWorkloadState(updated);
+    if (usingGuestData) {
+      setGuestWorkload(updated);
+      lastSyncedRef.current = updated;
+      return;
+    }
 
     try {
-      await fetch("/api/workload", {
+      const res = await fetch("/api/workload", {
         method: "PUT",
         headers: {
-          "Content-Type":
-            "application/json",
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           name: updated.name,
           tasks: updated.tasks,
-          started_at:
-            updated.startedAt,
-          cumulative_water:
-            updated.cumulativeWater,
+          started_at: updated.startedAt,
+          cumulative_water: updated.cumulativeWater,
         }),
       });
+
+      if (!res.ok) {
+        throw new Error("Save failed");
+      }
+
+      lastSyncedRef.current = updated;
     } catch (error) {
-      console.error(
-        "Failed to save workload:",
-        error
-      );
+      console.error("Failed to save workload:", error);
+
+      // Roll the UI back to the last state we know actually saved,
+      // so the user isn't looking at progress that silently didn't persist.
+      setWorkloadState(lastSyncedRef.current);
+
+      toast.error("Couldn't save your progress", {
+        description: "Your last change wasn't saved. Try again?",
+        action: {
+          label: "Retry",
+          onClick: onFailRetry,
+        },
+      });
+    }
+  }
+
+  // Used for one-off, immediate saves (creating/continuing a workload) —
+  // persists right away, no debounce.
+  async function setWorkload(updated: ActiveWorkload) {
+    setWorkloadState(updated);
+    await persistWorkload(updated, {
+      onFailRetry: () => setWorkload(updated),
+    });
+  }
+
+  // Used by the task counter in WorkloadPanel, which can fire many times a
+  // second. Updates the UI immediately (optimistic) but only sends one
+  // network request after the user pauses, so rapid taps collapse into a
+  // single write instead of racing each other.
+  function updateWorkload(updated: ActiveWorkload) {
+    setWorkloadState(updated);
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
     }
 
+    debounceRef.current = setTimeout(() => {
+      persistWorkload(updated, {
+        onFailRetry: () => updateWorkload(updated),
+      });
+    }, WORKLOAD_SAVE_DEBOUNCE_MS);
   }
 
   async function saveWorkload(
@@ -154,44 +250,63 @@ const active = await res.json();
           tasksTotal: totalTasks,
         };
 
-     try {
-  const res = await fetch("/api/garden", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(gardenEntry),
-  });
+      let gardenSaveFailed = false;
 
-  console.log("Garden save status:", res.status);
+      if (usingGuestData) {
+        addGuestGardenEntry(gardenEntry);
+        deleteGuestWorkload();
+      } else {
+        try {
+          const res = await fetch("/api/garden", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(gardenEntry),
+          });
 
-  const data = await res.text();
-  console.log("Garden save response:", data);
-} catch (error) {
-  console.error(
-    "Failed to save garden entry:",
-    error
-  );
-}
-
-      try {
-        await fetch(
-          "/api/workload",
-          {
-            method: "DELETE",
+          if (!res.ok) {
+            throw new Error("Failed to save garden entry");
           }
-        );
-      } catch (error) {
-        console.error(
-          "Failed to delete workload:",
-          error
-        );
+        } catch (error) {
+          console.error(
+            "Failed to save garden entry:",
+            error
+          );
+          gardenSaveFailed = true;
+        }
+
+        try {
+          await fetch(
+            "/api/workload",
+            {
+              method: "DELETE",
+            }
+          );
+        } catch (error) {
+          console.error(
+            "Failed to delete workload:",
+            error
+          );
+        }
       }
+
       setWorkloadState(null);
+      lastSyncedRef.current = null;
 
       setEndCycleOpen(false);
 
       setCreateOpen(true);
+
+      if (gardenSaveFailed) {
+        toast.error("Your plant wasn't saved to the garden", {
+          description: "Something went wrong on our end — sorry about that.",
+        });
+      } else {
+        toast.success(`${plant.emoji} Saved to your garden!`, {
+          description: `${workload.name} reached ${water}% growth.`,
+        });
+      }
     }
 
     if (choice === "continue") {
@@ -216,26 +331,53 @@ const active = await res.json();
     }
 
     if (choice === "reset") {
-      try {
-        await fetch(
-          "/api/workload",
-          {
-            method: "DELETE",
-          }
-        );
-      } catch (error) {
-        console.error(
-          "Failed to delete workload:",
-          error
-        );
+      if (usingGuestData) {
+        deleteGuestWorkload();
+      } else {
+        try {
+          await fetch(
+            "/api/workload",
+            {
+              method: "DELETE",
+            }
+          );
+        } catch (error) {
+          console.error(
+            "Failed to delete workload:",
+            error
+          );
+        }
       }
 
       setWorkloadState(null);
+      lastSyncedRef.current = null;
 
       setEndCycleOpen(false);
 
       setCreateOpen(true);
     }
+  }
+
+  function handleContinueAsGuest() {
+    enableGuestMode();
+    setGuest(true);
+  }
+
+  // Wait for Clerk + the local guest check before deciding what to render,
+  // so we never flash the welcome screen at an already-authenticated user.
+  if (!isLoaded || !guestChecked) {
+    return (
+      <main
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "#fefcf7" }}
+      >
+        <p style={{ color: "#9b8878" }}>Loading...</p>
+      </main>
+    );
+  }
+
+  if (!isSignedIn && !guest) {
+    return <WelcomeScreen onGuest={handleContinueAsGuest} />;
   }
 
   const water = workload
@@ -316,7 +458,6 @@ const active = await res.json();
           setEndCycleOpen(false)
         }
         onChoose={handleEndChoice}
-        
       />
     </main>
   );
