@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 
@@ -17,14 +18,33 @@ import {
 } from "@/lib/guestStorage";
 
 export default function GardenPage() {
-  const { isSignedIn } = useUser();
-  const [entries, setEntries] = useState<GardenEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { isLoaded, isSignedIn } = useUser();
+  const router = useRouter();
+
+  const [guestChecked, setGuestChecked] = useState(false);
   const [guest, setGuest] = useState(false);
 
+  const [entries, setEntries] = useState<GardenEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Check for a local guest session once on mount (client-only, avoids hydration mismatch)
   useEffect(() => {
-    const guestActive = isGuestMode() && !isSignedIn;
-    setGuest(guestActive);
+    setGuest(isGuestMode());
+    setGuestChecked(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isLoaded || !guestChecked) return;
+
+    // Neither signed in nor a guest — this visitor should never have
+    // reached this page directly. Send them to "/" where the Welcome
+    // screen will correctly show instead of hitting the API and 401'ing.
+    if (!isSignedIn && !guest) {
+      router.push("/");
+      return;
+    }
+
+    const guestActive = guest && !isSignedIn;
 
     async function loadGarden() {
       if (guestActive) {
@@ -40,9 +60,8 @@ export default function GardenPage() {
           throw new Error("Failed to load garden");
         }
 
-      const data = await res.json();
-      setEntries(data);
-
+        const data = await res.json();
+        setEntries(data);
       } catch (err) {
         console.error("Failed to load garden:", err);
         toast.error("Couldn't load your garden", {
@@ -54,10 +73,12 @@ export default function GardenPage() {
     }
 
     loadGarden();
-  }, [isSignedIn]);
+  }, [isLoaded, guestChecked, isSignedIn, guest, router]);
+
+  const guestActive = guest && !isSignedIn;
 
   const handleDelete = async (id: string) => {
-    if (guest) {
+    if (guestActive) {
       deleteGuestGardenEntry(id);
       setEntries((prev) =>
         prev.filter((entry) => entry.id !== id)
@@ -92,7 +113,7 @@ export default function GardenPage() {
 
     if (!confirmed) return;
 
-    if (guest) {
+    if (guestActive) {
       clearGuestGarden();
       setEntries([]);
       return;
@@ -118,7 +139,7 @@ export default function GardenPage() {
     }
   };
 
-  if (loading) {
+  if (!isLoaded || !guestChecked || loading) {
     return (
       <main
         className="min-h-screen flex items-center justify-center"
