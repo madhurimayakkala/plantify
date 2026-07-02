@@ -101,8 +101,16 @@ describe("getPlantInfo", () => {
   });
 
   it("includes a matching emoji and label for each stage", () => {
-    expect(getPlantInfo(10)).toEqual({ stage: "seed", emoji: "🌰", label: "Seed" });
-    expect(getPlantInfo(100)).toEqual({ stage: "tree", emoji: "🌳", label: "Full Tree" });
+    expect(getPlantInfo(10)).toEqual({
+      stage: "seed",
+      emoji: "🌰",
+      label: "Seed",
+    });
+    expect(getPlantInfo(100)).toEqual({
+      stage: "tree",
+      emoji: "🌳",
+      label: "Full Tree",
+    });
   });
 });
 

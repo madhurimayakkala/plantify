@@ -80,9 +80,7 @@ export default function GardenPage() {
   const handleDelete = async (id: string) => {
     if (guestActive) {
       deleteGuestGardenEntry(id);
-      setEntries((prev) =>
-        prev.filter((entry) => entry.id !== id)
-      );
+      setEntries((prev) => prev.filter((entry) => entry.id !== id));
       return;
     }
 
@@ -145,18 +143,13 @@ export default function GardenPage() {
         className="min-h-screen flex items-center justify-center"
         style={{ background: "#f8f5ef" }}
       >
-        <p style={{ color: "#6b5a4a" }}>
-          Loading garden...
-        </p>
+        <p style={{ color: "#6b5a4a" }}>Loading garden...</p>
       </main>
     );
   }
 
   return (
-    <main
-      className="min-h-screen"
-      style={{ background: "#f8f5ef" }}
-    >
+    <main className="min-h-screen" style={{ background: "#f8f5ef" }}>
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-6 py-10 md:px-10">
@@ -175,19 +168,13 @@ export default function GardenPage() {
             🌿 Your Garden
           </h1>
 
-          <p
-            className="mt-3 max-w-2xl"
-            style={{ color: "#6b5a4a" }}
-          >
-            Every plant here represents a completed workload.
-            Keep growing your collection.
+          <p className="mt-3 max-w-2xl" style={{ color: "#6b5a4a" }}>
+            Every plant here represents a completed workload. Keep growing your
+            collection.
           </p>
         </motion.div>
 
-        <GardenGrid
-          entries={entries}
-          onDelete={handleDelete}
-        />
+        <GardenGrid entries={entries} onDelete={handleDelete} />
 
         {entries.length > 0 && (
           <motion.div

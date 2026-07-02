@@ -6,12 +6,7 @@ import { usePathname } from "next/navigation";
 import { Leaf, Sprout } from "lucide-react";
 import { motion } from "framer-motion";
 
-import {
-  SignInButton,
-  SignUpButton,
-  Show,
-  UserButton,
-} from "@clerk/nextjs";
+import { SignInButton, SignUpButton, Show, UserButton } from "@clerk/nextjs";
 
 import { isGuestMode } from "@/lib/guestStorage";
 

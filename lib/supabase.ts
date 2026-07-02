@@ -19,7 +19,4 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
  * route handler, which checks the Clerk session before any Supabase call
  * is made using this client.
  */
-export const supabase = createClient(
-  supabaseUrl,
-  supabaseServiceRoleKey
-);
+export const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);

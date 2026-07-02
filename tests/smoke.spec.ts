@@ -52,9 +52,7 @@ test("guest can complete the full create -> progress -> end cycle -> garden flow
     page.getByRole("heading", { name: "New Workload" })
   ).not.toBeVisible();
 
-  await expect(
-    page.getByRole("heading", { name: "Test Prep" })
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Test Prep" })).toBeVisible();
 
   await expect(page.getByRole("button", { name: "End Cycle" })).toBeVisible();
 
@@ -74,9 +72,7 @@ test("guest can complete the full create -> progress -> end cycle -> garden flow
   // 7. End the cycle and choose "Save & Reset"
   await page.getByRole("button", { name: "End Cycle" }).click();
 
-  await expect(
-    page.getByRole("heading", { name: "End Cycle" })
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "End Cycle" })).toBeVisible();
 
   await page.getByRole("button", { name: "Save & Reset" }).click();
 

@@ -83,7 +83,10 @@ export default function WelcomeScreen({ onGuest }: Props) {
               Turn your to-do list into something that grows.
             </h1>
 
-            <p className="text-base leading-relaxed" style={{ color: "#6b5a4a" }}>
+            <p
+              className="text-base leading-relaxed"
+              style={{ color: "#6b5a4a" }}
+            >
               Plantify waters a plant as you finish real work. Every task you
               complete moves it from seed to full tree.
             </p>
@@ -123,8 +126,8 @@ export default function WelcomeScreen({ onGuest }: Props) {
           </div>
 
           <p className="text-xs" style={{ color: "#b3a494" }}>
-            Guest mode saves your progress on this device only. Sign up
-            anytime to keep it permanently.
+            Guest mode saves your progress on this device only. Sign up anytime
+            to keep it permanently.
           </p>
         </div>
       </div>

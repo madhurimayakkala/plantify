@@ -2,8 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 type RequireUserResult =
-  | { userId: string; error: null }
-  | { userId: null; error: NextResponse };
+  { userId: string; error: null } | { userId: null; error: NextResponse };
 
 /**
  * Centralizes the "is anyone signed in?" check that was previously
@@ -20,10 +19,7 @@ export async function requireUser(): Promise<RequireUserResult> {
   if (!userId) {
     return {
       userId: null,
-      error: NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      ),
+      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
     };
   }
 

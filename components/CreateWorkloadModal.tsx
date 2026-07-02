@@ -26,7 +26,12 @@ function emptyTask(): DraftTask {
   return { id: uid(), name: "", total: "" };
 }
 
-export default function CreateWorkloadModal({ open, existingWorkload, onClose, onSave }: Props) {
+export default function CreateWorkloadModal({
+  open,
+  existingWorkload,
+  onClose,
+  onSave,
+}: Props) {
   const [name, setName] = useState("");
   const [tasks, setTasks] = useState<DraftTask[]>([emptyTask()]);
   const [error, setError] = useState("");
@@ -46,7 +51,9 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
   }
 
   function removeTask(id: string) {
-    setTasks((prev) => (prev.length > 1 ? prev.filter((t) => t.id !== id) : prev));
+    setTasks((prev) =>
+      prev.length > 1 ? prev.filter((t) => t.id !== id) : prev
+    );
   }
 
   function updateTask(id: string, field: "name" | "total", value: string) {
@@ -111,7 +118,10 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
             exit={{ opacity: 0 }}
             onClick={submitting ? undefined : onClose}
             className="fixed inset-0 z-40"
-            style={{ background: "rgba(45,27,14,0.35)", backdropFilter: "blur(3px)" }}
+            style={{
+              background: "rgba(45,27,14,0.35)",
+              backdropFilter: "blur(3px)",
+            }}
           />
 
           {/* Modal */}
@@ -140,7 +150,10 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
                 <div>
                   <h2
                     className="font-bold text-lg"
-                    style={{ color: "#2d1b0e", fontFamily: "'Lora', Georgia, serif" }}
+                    style={{
+                      color: "#2d1b0e",
+                      fontFamily: "'Lora', Georgia, serif",
+                    }}
                   >
                     {existingWorkload ? "Add to Workload" : "New Workload"}
                   </h2>
@@ -194,7 +207,10 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
 
                 {/* Tasks */}
                 <div className="flex flex-col gap-2">
-                  <span className="text-sm font-semibold" style={{ color: "#2d1b0e" }}>
+                  <span
+                    className="text-sm font-semibold"
+                    style={{ color: "#2d1b0e" }}
+                  >
                     Tasks
                   </span>
 
@@ -212,7 +228,9 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
                           <input
                             type="text"
                             value={task.name}
-                            onChange={(e) => updateTask(task.id, "name", e.target.value)}
+                            onChange={(e) =>
+                              updateTask(task.id, "name", e.target.value)
+                            }
                             placeholder={`Task ${i + 1} name`}
                             disabled={submitting}
                             aria-label={`Task ${i + 1} name`}
@@ -226,7 +244,9 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
                           <input
                             type="number"
                             value={task.total}
-                            onChange={(e) => updateTask(task.id, "total", e.target.value)}
+                            onChange={(e) =>
+                              updateTask(task.id, "total", e.target.value)
+                            }
                             placeholder="Total"
                             min={1}
                             disabled={submitting}
@@ -306,8 +326,8 @@ export default function CreateWorkloadModal({ open, existingWorkload, onClose, o
                   {submitting
                     ? "Saving..."
                     : existingWorkload
-                    ? "Add Tasks"
-                    : "Plant Seed"}
+                      ? "Add Tasks"
+                      : "Plant Seed"}
                 </motion.button>
               </div>
             </div>

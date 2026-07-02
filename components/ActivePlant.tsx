@@ -3,7 +3,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Droplets, Sprout } from "lucide-react";
 import type { ActiveWorkload } from "@/lib/types";
-import { calculateWater, getPlantInfo, formatWaterBreakdown } from "@/lib/waterCalc";
+import {
+  calculateWater,
+  getPlantInfo,
+  formatWaterBreakdown,
+} from "@/lib/waterCalc";
 
 interface Props {
   workload: ActiveWorkload | null;
@@ -11,7 +15,11 @@ interface Props {
   onCreateWorkload: () => void;
 }
 
-export default function ActivePlant({ workload, onEndCycle, onCreateWorkload }: Props) {
+export default function ActivePlant({
+  workload,
+  onEndCycle,
+  onCreateWorkload,
+}: Props) {
   const water = workload
     ? calculateWater(workload.tasks, workload.cumulativeWater)
     : 0;
@@ -26,7 +34,8 @@ export default function ActivePlant({ workload, onEndCycle, onCreateWorkload }: 
     <div
       className="rounded-2xl p-8 flex flex-col items-center gap-6 relative overflow-hidden"
       style={{
-        background: "linear-gradient(160deg, #f4faf2 0%, #eaf5e4 60%, #d8f0d0 100%)",
+        background:
+          "linear-gradient(160deg, #f4faf2 0%, #eaf5e4 60%, #d8f0d0 100%)",
         border: "1px solid #c8e6c0",
         boxShadow: "0 4px 32px rgba(61,107,53,0.08)",
       }}
@@ -49,7 +58,11 @@ export default function ActivePlant({ workload, onEndCycle, onCreateWorkload }: 
           exit={{ scale: 0.7, opacity: 0, y: -10 }}
           transition={{ type: "spring", stiffness: 280, damping: 22 }}
           className="select-none"
-          style={{ fontSize: "6rem", lineHeight: 1, filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.12))" }}
+          style={{
+            fontSize: "6rem",
+            lineHeight: 1,
+            filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.12))",
+          }}
         >
           {plant.emoji}
         </motion.div>
@@ -73,7 +86,10 @@ export default function ActivePlant({ workload, onEndCycle, onCreateWorkload }: 
       {/* Water bar */}
       <div className="w-full max-w-xs flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <span className="flex items-center gap-1.5 text-sm font-medium" style={{ color: "#3d6b35" }}>
+          <span
+            className="flex items-center gap-1.5 text-sm font-medium"
+            style={{ color: "#3d6b35" }}
+          >
             <Droplets size={15} />
             Water
           </span>
@@ -111,7 +127,10 @@ export default function ActivePlant({ workload, onEndCycle, onCreateWorkload }: 
 
       {/* Task count */}
       {hasWorkload && (
-        <div className="flex items-center gap-2 text-sm" style={{ color: "#4a6741" }}>
+        <div
+          className="flex items-center gap-2 text-sm"
+          style={{ color: "#4a6741" }}
+        >
           <Sprout size={14} />
           <span>
             {tasksDone} of {tasksTotal} items complete

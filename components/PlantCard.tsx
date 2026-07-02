@@ -45,7 +45,12 @@ export default function PlantCard({ entry, index, onDelete }: Props) {
     <motion.div
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: index * 0.06, type: "spring", stiffness: 280, damping: 24 }}
+      transition={{
+        delay: index * 0.06,
+        type: "spring",
+        stiffness: 280,
+        damping: 24,
+      }}
       whileHover={{ y: -4, boxShadow: "0 16px 40px rgba(61,107,53,0.14)" }}
       className="rounded-2xl overflow-hidden flex flex-col"
       style={{
@@ -75,7 +80,11 @@ export default function PlantCard({ entry, index, onDelete }: Props) {
             <motion.div
               initial={{ scaleX: 0 }}
               animate={{ scaleX: waterPct / 100 }}
-              transition={{ duration: 0.7, ease: "easeOut", delay: index * 0.06 + 0.2 }}
+              transition={{
+                duration: 0.7,
+                ease: "easeOut",
+                delay: index * 0.06 + 0.2,
+              }}
               className="h-full rounded-full"
               style={{
                 background: `linear-gradient(90deg, #7cb87a, #3d6b35)`,
@@ -95,7 +104,10 @@ export default function PlantCard({ entry, index, onDelete }: Props) {
       {/* Info section */}
       <div
         className="px-4 py-4 flex flex-col gap-2 flex-1 border-t"
-        style={{ borderColor: `${borderColor}33`, background: "rgba(255,255,255,0.5)" }}
+        style={{
+          borderColor: `${borderColor}33`,
+          background: "rgba(255,255,255,0.5)",
+        }}
       >
         <p
           className="font-semibold text-sm leading-snug"
@@ -105,13 +117,19 @@ export default function PlantCard({ entry, index, onDelete }: Props) {
         </p>
 
         <div className="flex flex-col gap-1.5 mt-1">
-          <div className="flex items-center gap-1.5 text-xs" style={{ color: "#6b5a4a" }}>
+          <div
+            className="flex items-center gap-1.5 text-xs"
+            style={{ color: "#6b5a4a" }}
+          >
             <Layers size={12} />
             <span>
               {entry.tasksCompleted} / {entry.tasksTotal} tasks done
             </span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs" style={{ color: "#6b5a4a" }}>
+          <div
+            className="flex items-center gap-1.5 text-xs"
+            style={{ color: "#6b5a4a" }}
+          >
             <Calendar size={12} />
             <span>{formatDate(entry.savedAt)}</span>
           </div>
@@ -121,7 +139,10 @@ export default function PlantCard({ entry, index, onDelete }: Props) {
       {/* Delete footer */}
       <div
         className="px-4 py-3 flex justify-end border-t"
-        style={{ borderColor: `${borderColor}22`, background: "rgba(255,255,255,0.3)" }}
+        style={{
+          borderColor: `${borderColor}22`,
+          background: "rgba(255,255,255,0.3)",
+        }}
       >
         <motion.button
           whileTap={{ scale: 0.9 }}

@@ -22,7 +22,12 @@ interface OptionCard {
   bg: string;
 }
 
-export default function EndCycleModal({ open, workload, onClose, onChoose }: Props) {
+export default function EndCycleModal({
+  open,
+  workload,
+  onClose,
+  onChoose,
+}: Props) {
   const [processing, setProcessing] = useState(false);
 
   // Reset the processing state whenever the modal is (re)opened
@@ -30,7 +35,9 @@ export default function EndCycleModal({ open, workload, onClose, onChoose }: Pro
     if (open) setProcessing(false);
   }, [open]);
 
-  const water = workload ? calculateWater(workload.tasks, workload.cumulativeWater) : 0;
+  const water = workload
+    ? calculateWater(workload.tasks, workload.cumulativeWater)
+    : 0;
   const plant = getPlantInfo(water);
 
   const options: OptionCard[] = [
@@ -82,7 +89,10 @@ export default function EndCycleModal({ open, workload, onClose, onChoose }: Pro
             exit={{ opacity: 0 }}
             onClick={processing ? undefined : onClose}
             className="fixed inset-0 z-40"
-            style={{ background: "rgba(45,27,14,0.4)", backdropFilter: "blur(4px)" }}
+            style={{
+              background: "rgba(45,27,14,0.4)",
+              backdropFilter: "blur(4px)",
+            }}
           />
 
           <motion.div
@@ -160,7 +170,10 @@ export default function EndCycleModal({ open, workload, onClose, onChoose }: Pro
                   >
                     <div
                       className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
-                      style={{ background: `${opt.accent}18`, color: opt.accent }}
+                      style={{
+                        background: `${opt.accent}18`,
+                        color: opt.accent,
+                      }}
                     >
                       {opt.icon}
                     </div>
@@ -171,7 +184,10 @@ export default function EndCycleModal({ open, workload, onClose, onChoose }: Pro
                       >
                         {opt.title}
                       </p>
-                      <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "#6b5a4a" }}>
+                      <p
+                        className="text-xs mt-0.5 leading-relaxed"
+                        style={{ color: "#6b5a4a" }}
+                      >
                         {opt.description}
                       </p>
                     </div>

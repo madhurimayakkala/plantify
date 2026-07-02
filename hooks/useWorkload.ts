@@ -18,11 +18,7 @@ import {
   addGuestGardenEntry,
 } from "@/lib/guestStorage";
 
-import type {
-  ActiveWorkload,
-  EndCycleChoice,
-  GardenEntry,
-} from "@/lib/types";
+import type { ActiveWorkload, EndCycleChoice, GardenEntry } from "@/lib/types";
 
 const WORKLOAD_SAVE_DEBOUNCE_MS = 500;
 
@@ -32,14 +28,11 @@ export function useWorkload() {
   const [guestChecked, setGuestChecked] = useState(false);
   const [guest, setGuest] = useState(false);
 
-  const [workload, setWorkloadState] =
-    useState<ActiveWorkload | null>(null);
+  const [workload, setWorkloadState] = useState<ActiveWorkload | null>(null);
 
-  const [createOpen, setCreateOpen] =
-    useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
 
-  const [endCycleOpen, setEndCycleOpen] =
-    useState(false);
+  const [endCycleOpen, setEndCycleOpen] = useState(false);
 
   // Last state we know is actually persisted (server or guest storage).
   // Used to roll the UI back if a save fails.
@@ -71,8 +64,7 @@ export function useWorkload() {
     const localWorkload = getGuestWorkload();
     const localGarden = getGuestGarden();
 
-    const hasDataToMigrate =
-      localWorkload !== null || localGarden.length > 0;
+    const hasDataToMigrate = localWorkload !== null || localGarden.length > 0;
 
     if (!hasDataToMigrate) {
       exitGuestMode();
@@ -93,9 +85,7 @@ export function useWorkload() {
       // already have one — never overwrite real, existing progress.
       if (localWorkload) {
         const existingRes = await fetch("/api/workload");
-        const existing = existingRes.ok
-          ? await existingRes.json()
-          : null;
+        const existing = existingRes.ok ? await existingRes.json() : null;
 
         if (!existing) {
           await fetch("/api/workload", {
@@ -139,11 +129,7 @@ export function useWorkload() {
       // If this is a guest who just signed in, migrate their local
       // data into their new account first, then let the normal load
       // path (below, in a future run of this effect) take over.
-      if (
-        isSignedIn &&
-        guest &&
-        !migrationAttemptedRef.current
-      ) {
+      if (isSignedIn && guest && !migrationAttemptedRef.current) {
         migrationAttemptedRef.current = true;
         await migrateGuestDataToAccount();
         setGuest(false); // triggers this effect to re-run with fresh, correct state
@@ -175,14 +161,11 @@ export function useWorkload() {
 
         if (active) {
           const loaded: ActiveWorkload = {
-            id:
-              active.id ??
-              crypto.randomUUID(),
+            id: active.id ?? crypto.randomUUID(),
             name: active.name,
             tasks: active.tasks,
             startedAt: active.started_at,
-            cumulativeWater:
-              active.cumulative_water,
+            cumulativeWater: active.cumulative_water,
           };
 
           setWorkloadState(loaded);
@@ -283,55 +266,39 @@ export function useWorkload() {
     }, WORKLOAD_SAVE_DEBOUNCE_MS);
   }
 
-  async function saveWorkload(
-    workloadData: ActiveWorkload
-  ) {
+  async function saveWorkload(workloadData: ActiveWorkload) {
     await setWorkload(workloadData);
     setCreateOpen(false);
   }
 
-  async function handleEndChoice(
-    choice: EndCycleChoice
-  ) {
+  async function handleEndChoice(choice: EndCycleChoice) {
     if (!workload) return;
 
-    const water = calculateWater(
-      workload.tasks,
-      workload.cumulativeWater
-    );
+    const water = calculateWater(workload.tasks, workload.cumulativeWater);
 
     const plant = getPlantInfo(water);
 
     if (choice === "save_reset") {
-      const totalTasks =
-        workload.tasks.reduce(
-          (sum, task) =>
-            sum + task.total,
-          0
-        );
+      const totalTasks = workload.tasks.reduce(
+        (sum, task) => sum + task.total,
+        0
+      );
 
-      const completedTasks =
-        workload.tasks.reduce(
-          (sum, task) =>
-            sum + task.completed,
-          0
-        );
+      const completedTasks = workload.tasks.reduce(
+        (sum, task) => sum + task.completed,
+        0
+      );
 
-      const gardenEntry: GardenEntry =
-        {
-          id: crypto.randomUUID(),
-          workloadName:
-            workload.name,
-          savedAt:
-            new Date().toISOString(),
-          waterPercent: water,
-          stage: plant.stage,
-          stageEmoji:
-            plant.emoji,
-          tasksCompleted:
-            completedTasks,
-          tasksTotal: totalTasks,
-        };
+      const gardenEntry: GardenEntry = {
+        id: crypto.randomUUID(),
+        workloadName: workload.name,
+        savedAt: new Date().toISOString(),
+        waterPercent: water,
+        stage: plant.stage,
+        stageEmoji: plant.emoji,
+        tasksCompleted: completedTasks,
+        tasksTotal: totalTasks,
+      };
 
       let gardenSaveFailed = false;
 
@@ -352,25 +319,16 @@ export function useWorkload() {
             throw new Error("Failed to save garden entry");
           }
         } catch (error) {
-          console.error(
-            "Failed to save garden entry:",
-            error
-          );
+          console.error("Failed to save garden entry:", error);
           gardenSaveFailed = true;
         }
 
         try {
-          await fetch(
-            "/api/workload",
-            {
-              method: "DELETE",
-            }
-          );
+          await fetch("/api/workload", {
+            method: "DELETE",
+          });
         } catch (error) {
-          console.error(
-            "Failed to delete workload:",
-            error
-          );
+          console.error("Failed to delete workload:", error);
         }
       }
 
@@ -393,18 +351,15 @@ export function useWorkload() {
     }
 
     if (choice === "continue") {
-      const currentWater =
-        calculateWater(
-          workload.tasks,
-          workload.cumulativeWater
-        );
+      const currentWater = calculateWater(
+        workload.tasks,
+        workload.cumulativeWater
+      );
 
-      const updated: ActiveWorkload =
-        {
-          ...workload,
-          cumulativeWater:
-            currentWater,
-        };
+      const updated: ActiveWorkload = {
+        ...workload,
+        cumulativeWater: currentWater,
+      };
 
       await setWorkload(updated);
 
@@ -418,17 +373,11 @@ export function useWorkload() {
         deleteGuestWorkload();
       } else {
         try {
-          await fetch(
-            "/api/workload",
-            {
-              method: "DELETE",
-            }
-          );
+          await fetch("/api/workload", {
+            method: "DELETE",
+          });
         } catch (error) {
-          console.error(
-            "Failed to delete workload:",
-            error
-          );
+          console.error("Failed to delete workload:", error);
         }
       }
 

@@ -1,6 +1,9 @@
 import type { Task, PlantInfo, PlantStage } from "./types";
 
-export function calculateWater(tasks: Task[], cumulativeWater: number = 0): number {
+export function calculateWater(
+  tasks: Task[],
+  cumulativeWater: number = 0
+): number {
   if (tasks.length === 0) return Math.min(cumulativeWater, 100);
 
   const percentages = tasks.map((t) =>
@@ -11,7 +14,9 @@ export function calculateWater(tasks: Task[], cumulativeWater: number = 0): numb
     percentages.reduce((sum, p) => sum + p, 0) / percentages.length;
 
   // Cumulative water blends carried-over progress with current workload
-  const blended = Math.round((cumulativeWater + average) / (cumulativeWater > 0 ? 2 : 1));
+  const blended = Math.round(
+    (cumulativeWater + average) / (cumulativeWater > 0 ? 2 : 1)
+  );
   return Math.min(blended, 100);
 }
 
