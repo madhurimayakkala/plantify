@@ -8,6 +8,25 @@ function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
 
+// Lets React components subscribe to the guest flag (via
+// useSyncExternalStore) instead of copying it into state inside an effect.
+const guestModeListeners = new Set<() => void>();
+
+function emitGuestModeChange(): void {
+  guestModeListeners.forEach((listener) => listener());
+}
+
+export function subscribeGuestMode(listener: () => void): () => void {
+  guestModeListeners.add(listener);
+  // The "storage" event covers changes made from another tab.
+  if (isBrowser()) window.addEventListener("storage", listener);
+
+  return () => {
+    guestModeListeners.delete(listener);
+    if (isBrowser()) window.removeEventListener("storage", listener);
+  };
+}
+
 export function isGuestMode(): boolean {
   if (!isBrowser()) return false;
   return window.localStorage.getItem(GUEST_MODE_KEY) === "true";
@@ -16,6 +35,7 @@ export function isGuestMode(): boolean {
 export function enableGuestMode(): void {
   if (!isBrowser()) return;
   window.localStorage.setItem(GUEST_MODE_KEY, "true");
+  emitGuestModeChange();
 }
 
 export function exitGuestMode(): void {
@@ -23,6 +43,7 @@ export function exitGuestMode(): void {
   window.localStorage.removeItem(GUEST_MODE_KEY);
   window.localStorage.removeItem(GUEST_WORKLOAD_KEY);
   window.localStorage.removeItem(GUEST_GARDEN_KEY);
+  emitGuestModeChange();
 }
 
 export function getGuestWorkload(): ActiveWorkload | null {

@@ -10,8 +10,9 @@ import Navbar from "@/components/Navbar";
 import GardenGrid from "@/components/GardenGrid";
 import type { GardenEntry } from "@/lib/types";
 
+import { useHydrated, useIsGuestMode } from "@/hooks/useGuestMode";
+
 import {
-  isGuestMode,
   getGuestGarden,
   deleteGuestGardenEntry,
   clearGuestGarden,
@@ -21,17 +22,13 @@ export default function GardenPage() {
   const { isLoaded, isSignedIn } = useUser();
   const router = useRouter();
 
-  const [guestChecked, setGuestChecked] = useState(false);
-  const [guest, setGuest] = useState(false);
+  // Client-only guest check; false until hydration so server and client
+  // markup match.
+  const guestChecked = useHydrated();
+  const guest = useIsGuestMode();
 
   const [entries, setEntries] = useState<GardenEntry[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Check for a local guest session once on mount (client-only, avoids hydration mismatch)
-  useEffect(() => {
-    setGuest(isGuestMode());
-    setGuestChecked(true);
-  }, []);
 
   useEffect(() => {
     if (!isLoaded || !guestChecked) return;

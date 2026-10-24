@@ -1,5 +1,6 @@
 // lib/migrateGuestData.ts
 import type { ActiveWorkload, GardenEntry } from "./types";
+import { toWorkloadPayload } from "./workloadMapping";
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -58,12 +59,7 @@ export async function migrateGuestData({
       const putRes = await fetchFn("/api/workload", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: workload.name,
-          tasks: workload.tasks,
-          started_at: workload.startedAt,
-          cumulative_water: workload.cumulativeWater,
-        }),
+        body: JSON.stringify(toWorkloadPayload(workload)),
       });
       assertOk(putRes, "Saving workload");
     }
