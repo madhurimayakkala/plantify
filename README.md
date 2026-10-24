@@ -58,12 +58,16 @@ Versions are the ones in `package.json`.
 
 ## Architecture notes
 
-**Why the server uses the service role key.** Clerk handles identity, not Supabase, so Supabase has no idea who the signed-in user is and can't evaluate row-level security policies against them. Instead, all database access goes through Next.js route handlers (`app/api/**`) using `SUPABASE_SERVICE_ROLE_KEY`, which bypasses RLS. That key has no `NEXT_PUBLIC_` prefix and `lib/supabase.ts` is only imported by route handlers, so it never reaches the browser bundle.
+**Row Level Security, enforced by the database.** Clerk handles sign-in and Supabase stores the data. Supabase is configured to trust Clerk as a third-party auth provider, so it can verify Clerk session tokens. Route handlers (`app/api/**`) create a per-request Supabase client (`lib/supabase-server.ts`) with the **anon** key and the signed-in user's Clerk token. Postgres reads the token's `sub` claim (the Clerk user id) and RLS policies on `active_workloads` and `garden_entries` only allow rows where `user_id` matches it. There is no service role key in the app; even a bug in a route handler can't read another user's rows. The policies live in `supabase/migrations/`, and `supabase/tests/rls_verification.sql` checks them.
 
-**How authorization is enforced.** Because RLS is bypassed, the app code is the only gate, so it is done the same way everywhere:
+**Defense in depth.** The app code still checks ownership itself, so a mistake in one layer isn't enough to leak data:
 
 1. Every handler starts with `requireUser()` (`lib/api-auth.ts`), which reads the Clerk session and returns a 401 if nobody is signed in.
-2. Every query is filtered by that `userId` (`.eq("user_id", userId)`), including reads, deletes and the read-back after a garden save. The client never decides whose data it touches.
+2. Every query is also filtered by that `userId` (`.eq("user_id", userId)`), including reads, deletes and the read-back after a garden save. The client never decides whose data it touches.
+
+**Concurrent edits.** `PUT /api/workload` is a compare-and-swap: the client sends the `updated_at` it last saw and the server only writes if it still matches. Otherwise it returns 409 with the current workload, and the client shows a toast and switches to the server's copy. The first save for a user is create-only.
+
+**Health check.** `GET /api/health` is public and calls a tiny SQL function (`public.health_check()`) that reads no tables, so it works under RLS and exposes no data. Use it for uptime and keep-alive pings.
 
 **Idempotent garden saves.** The client generates a UUID for each garden entry. `POST /api/garden` upserts on that `id` with `ignoreDuplicates`, then reads the row back filtered by `user_id`. Retrying a half-finished guest migration therefore can't create duplicates, and an id that belongs to another user returns 409 instead of touching their row. If you're setting up your own Supabase project, see `supabase/garden_entries_client_id.sql` for the column requirements.
 
@@ -101,10 +105,9 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 CLERK_SECRET_KEY
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY
 ```
 
-The app expects two tables in Supabase: `active_workloads` (one row per user) and `garden_entries`. Full table definitions aren't checked into the repo yet; the only SQL included is the `garden_entries.id` note mentioned above.
+The app expects two tables in Supabase: `active_workloads` (one row per user) and `garden_entries`. Full table definitions aren't checked into the repo yet. `supabase/migrations/` holds the changes made so far (workload concurrency, then RLS); run them in filename order. To use RLS you also need Clerk's Supabase integration enabled and Clerk added under Authentication > Sign In / Up > Third-Party Auth in the Supabase dashboard.
 
 ## Tests
 
@@ -122,9 +125,6 @@ GitHub Actions (`.github/workflows/ci.yml`) runs lint, Vitest and the build on e
 
 ## Future improvements
 
-- Streaks and a proper history of past cycles
-- Charts of progress over time
-- Row Level Security using Clerk JWTs, so the database enforces ownership too instead of relying only on server code
 - A real migrations folder for the Supabase schema
 - Component-level tests for the `useWorkload` hook
 

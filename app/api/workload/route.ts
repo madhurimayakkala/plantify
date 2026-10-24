@@ -1,6 +1,6 @@
 // app/api/workload/route.ts
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createServerSupabase } from "@/lib/supabase-server";
 import { requireUser } from "@/lib/api-auth";
 import { parseAndValidate, workloadSaveSchema } from "@/lib/validation";
 import { saveWorkload } from "@/lib/workloadSave";
@@ -8,6 +8,9 @@ import { saveWorkload } from "@/lib/workloadSave";
 export async function GET() {
   const { userId, error: authError } = await requireUser();
   if (authError) return authError;
+
+  // Acts as this user: RLS applies on top of the user_id filters below.
+  const supabase = createServerSupabase();
 
   const { data, error } = await supabase
     .from("active_workloads")
@@ -25,6 +28,9 @@ export async function GET() {
 export async function PUT(req: Request) {
   const { userId, error: authError } = await requireUser();
   if (authError) return authError;
+
+  // Acts as this user: RLS applies on top of the user_id filters below.
+  const supabase = createServerSupabase();
 
   const { data: body, error: validationError } = await parseAndValidate(
     req,
@@ -56,6 +62,9 @@ export async function PUT(req: Request) {
 export async function DELETE() {
   const { userId, error: authError } = await requireUser();
   if (authError) return authError;
+
+  // Acts as this user: RLS applies on top of the user_id filters below.
+  const supabase = createServerSupabase();
 
   const { error } = await supabase
     .from("active_workloads")
