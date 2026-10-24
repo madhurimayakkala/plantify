@@ -1,5 +1,30 @@
 import type { Task, PlantInfo, PlantStage } from "./types";
 
+/**
+ * Water % for the current cycle, from 0 to 100.
+ *
+ * Step 1: average each task's completion (completed / total, capped at 100%
+ * per task). A task with total 0 counts as 0% but still counts in the
+ * average. With no tasks, the result is just the carried-over water.
+ *
+ * Step 2: blend in `cumulativeWater`, the water carried over when the user
+ * chose "continue" at the end of a previous cycle.
+ *
+ *   cumulativeWater === 0  ->  average
+ *   cumulativeWater  >  0  ->  (cumulativeWater + average) / 2
+ *
+ * NOTE: this is a plain two-way average, so carried progress is HALVED
+ * every cycle: with no new work, 80 becomes 40, then 20, then 10. Old
+ * progress therefore fades geometrically, and new work always carries half
+ * the weight of the final number. A side effect is a jump at zero: carried
+ * water of 0 means "no blend" (a perfect cycle scores 100), while carried
+ * water of 1 means "blend" (the same cycle scores 51).
+ *
+ * This is the app's current, intended-to-be-preserved behavior; it is
+ * locked in by tests in waterCalc.test.ts. Change it only on purpose.
+ *
+ * Results are rounded to an integer and capped at 100.
+ */
 export function calculateWater(
   tasks: Task[],
   cumulativeWater: number = 0

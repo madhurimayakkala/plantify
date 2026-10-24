@@ -111,6 +111,7 @@ describe("migrateGuestData", () => {
         tasks: workload.tasks,
         started_at: workload.startedAt,
         cumulative_water: 0,
+        expected_updated_at: null, // create-only: never overwrite
       });
     });
 

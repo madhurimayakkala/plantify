@@ -7,6 +7,11 @@ export interface WorkloadPayload {
   tasks: ActiveWorkload["tasks"];
   started_at: string;
   cumulative_water: number;
+  /**
+   * The `updated_at` this client last saw, or null if it thinks no row
+   * exists yet. The server only applies the write if it still matches.
+   */
+  expected_updated_at: string | null;
 }
 
 /** A row as returned by GET /api/workload. */
@@ -16,14 +21,20 @@ export interface ServerWorkload {
   tasks: ActiveWorkload["tasks"];
   started_at: string;
   cumulative_water: number;
+  /** Server-assigned version stamp; changes on every successful write. */
+  updated_at?: string;
 }
 
-export function toWorkloadPayload(workload: ActiveWorkload): WorkloadPayload {
+export function toWorkloadPayload(
+  workload: ActiveWorkload,
+  expectedUpdatedAt: string | null
+): WorkloadPayload {
   return {
     name: workload.name,
     tasks: workload.tasks,
     started_at: workload.startedAt,
     cumulative_water: workload.cumulativeWater,
+    expected_updated_at: expectedUpdatedAt,
   };
 }
 

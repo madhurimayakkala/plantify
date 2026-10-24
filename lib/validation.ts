@@ -5,6 +5,7 @@ import type { ZodSchema } from "zod";
 export {
   taskSchema,
   workloadPutSchema,
+  workloadSaveSchema,
   plantStageSchema,
   gardenPostSchema,
 } from "./schemas";

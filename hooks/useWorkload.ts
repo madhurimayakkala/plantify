@@ -139,7 +139,7 @@ export function useWorkload() {
         const active = await res.json();
 
         if (active) {
-          hydrate(fromServerWorkload(active));
+          hydrate(fromServerWorkload(active), active.updated_at ?? null);
         } else {
           setCreateOpen(true);
         }

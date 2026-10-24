@@ -25,6 +25,19 @@ export const workloadPutSchema = z.object({
   cumulative_water: z.number().min(0).max(100),
 });
 
+/**
+ * Body of PUT /api/workload: the workload plus the concurrency token.
+ *
+ * `expected_updated_at` is the `updated_at` the client last saw for its copy
+ * of the row, or `null` when it believes no row exists yet (first save). It
+ * is required (not optional) so a client can never opt out of the check by
+ * leaving it off. Kept separate from `workloadPutSchema` so the editing UI,
+ * which only validates content, doesn't need it.
+ */
+export const workloadSaveSchema = workloadPutSchema.extend({
+  expected_updated_at: z.string().min(1).nullable(),
+});
+
 export const plantStageSchema = z.enum([
   "seed",
   "sprout",

@@ -59,8 +59,11 @@ export async function migrateGuestData({
       const putRes = await fetchFn("/api/workload", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(toWorkloadPayload(workload)),
+        body: JSON.stringify(toWorkloadPayload(workload, null)),
       });
+      // expected_updated_at is null: "create only". If a workload appeared
+      // in the meantime the server answers 409 and this throws, so the
+      // guest data stays on the device and migration retries on refresh.
       assertOk(putRes, "Saving workload");
     }
   }

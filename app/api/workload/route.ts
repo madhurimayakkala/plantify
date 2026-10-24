@@ -2,7 +2,8 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { requireUser } from "@/lib/api-auth";
-import { parseAndValidate, workloadPutSchema } from "@/lib/validation";
+import { parseAndValidate, workloadSaveSchema } from "@/lib/validation";
+import { saveWorkload } from "@/lib/workloadSave";
 
 export async function GET() {
   const { userId, error: authError } = await requireUser();
@@ -27,28 +28,29 @@ export async function PUT(req: Request) {
 
   const { data: body, error: validationError } = await parseAndValidate(
     req,
-    workloadPutSchema
+    workloadSaveSchema
   );
   if (validationError) return validationError;
 
-  const { data, error } = await supabase
-    .from("active_workloads")
-    .upsert({
-      user_id: userId,
-      name: body.name,
-      tasks: body.tasks,
-      started_at: body.started_at,
-      cumulative_water: body.cumulative_water,
-      updated_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
+  const result = await saveWorkload(supabase, userId, body);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (result.status === "conflict") {
+    // The client's copy is stale (or the row was created/deleted elsewhere).
+    // Send the current row so it can refresh without another round trip.
+    return NextResponse.json(
+      {
+        error: "Workload was changed elsewhere",
+        current: result.current,
+      },
+      { status: 409 }
+    );
   }
 
-  return NextResponse.json(data);
+  if (result.status === "error") {
+    return NextResponse.json({ error: result.message }, { status: 500 });
+  }
+
+  return NextResponse.json(result.workload);
 }
 
 export async function DELETE() {

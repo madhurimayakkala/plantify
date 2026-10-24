@@ -158,3 +158,101 @@ describe("formatWaterBreakdown", () => {
     expect(formatWaterBreakdown(tasks)).toBe("Empty Task: 0%");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Locked-in behavior of the carry-over blend. These pin down what the code
+// does TODAY (including its quirks) so any future change to the formula is a
+// deliberate, visible decision. See the comment on calculateWater.
+// ---------------------------------------------------------------------------
+describe("calculateWater: carry-over blend (locked-in behavior)", () => {
+  describe("cumulativeWater = 0", () => {
+    it("returns the plain average with no halving", () => {
+      expect(calculateWater([task({ total: 10, completed: 6 })], 0)).toBe(60);
+    });
+
+    it("defaults cumulativeWater to 0 when omitted", () => {
+      expect(calculateWater([task({ total: 10, completed: 6 })])).toBe(60);
+    });
+  });
+
+  describe("cumulativeWater > 0", () => {
+    it("returns the mean of carried water and the current average", () => {
+      // (40 + 80) / 2
+      expect(calculateWater([task({ total: 10, completed: 8 })], 40)).toBe(60);
+    });
+
+    it("halves carried progress when the new cycle has done nothing", () => {
+      expect(calculateWater([task({ total: 10, completed: 0 })], 80)).toBe(40);
+    });
+
+    it("decays old progress by half each cycle when fed back in", () => {
+      const idle = [task({ total: 10, completed: 0 })];
+      const cycle1 = calculateWater(idle, 80); // 40
+      const cycle2 = calculateWater(idle, cycle1); // 20
+      const cycle3 = calculateWater(idle, cycle2); // 10
+      expect([cycle1, cycle2, cycle3]).toEqual([40, 20, 10]);
+    });
+
+    it("rounds the blended value to the nearest integer", () => {
+      // (1 + 0) / 2 = 0.5 -> Math.round -> 1
+      expect(calculateWater([task({ total: 10, completed: 0 })], 1)).toBe(1);
+      // (0 + 33.33...) -> (1 + 33.33) / 2 = 17.17 -> 17
+      expect(calculateWater([task({ total: 3, completed: 1 })], 1)).toBe(17);
+    });
+
+    it("is discontinuous at zero: any carried water, however small, halves the new cycle", () => {
+      const done = [task({ total: 10, completed: 10 })];
+      expect(calculateWater(done, 0)).toBe(100);
+      expect(calculateWater(done, 1)).toBe(51); // (1 + 100) / 2 = 50.5 -> 51
+    });
+  });
+
+  describe("empty tasks", () => {
+    it("returns 0 with no carried water", () => {
+      expect(calculateWater([], 0)).toBe(0);
+    });
+
+    it("returns carried water unchanged (not halved)", () => {
+      expect(calculateWater([], 64)).toBe(64);
+    });
+
+    it("caps carried water at 100", () => {
+      expect(calculateWater([], 250)).toBe(100);
+    });
+  });
+
+  describe("cap at 100", () => {
+    it("caps a blend that would exceed 100", () => {
+      // (150 + 100) / 2 = 125 -> 100. (Out of range input, but locked in.)
+      expect(calculateWater([task({ total: 10, completed: 10 })], 150)).toBe(
+        100
+      );
+    });
+
+    it("reaches exactly 100 when carried water and progress are both 100", () => {
+      expect(calculateWater([task({ total: 5, completed: 5 })], 100)).toBe(100);
+    });
+
+    it("treats over-complete tasks as 100%, not more", () => {
+      expect(calculateWater([task({ total: 4, completed: 9 })], 0)).toBe(100);
+    });
+  });
+
+  describe("tasks with total 0", () => {
+    it("counts as 0% rather than dividing by zero", () => {
+      expect(calculateWater([task({ total: 0, completed: 0 })], 0)).toBe(0);
+    });
+
+    it("still counts in the average, dragging it down", () => {
+      const tasks = [
+        task({ id: "a", total: 10, completed: 10 }),
+        task({ id: "b", total: 0, completed: 0 }),
+      ];
+      expect(calculateWater(tasks, 0)).toBe(50);
+    });
+
+    it("blends with carried water like any other 0% task", () => {
+      expect(calculateWater([task({ total: 0, completed: 0 })], 60)).toBe(30);
+    });
+  });
+});
