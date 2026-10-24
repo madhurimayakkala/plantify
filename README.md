@@ -43,3 +43,7 @@ Building Plantify helped me gain hands-on experience with:
 ## Live Demo
 
 https://plantify-ecru.vercel.app/
+
+## Legacy Prototype
+
+The `legacy/` folder is the original Flask prototype of Plantify. It is kept for reference only and is not part of the Next.js app.
