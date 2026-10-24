@@ -30,7 +30,7 @@ export const plantStageSchema = z.enum([
 ]);
 
 export const gardenPostSchema = z.object({
-  id: z.string().min(1, "id is required"),
+  id: z.string().uuid("id must be a UUID"),
   workloadName: z.string().trim().min(1, "workloadName is required").max(200),
   savedAt: z.string().min(1, "savedAt is required"),
   waterPercent: z.number().min(0).max(100),

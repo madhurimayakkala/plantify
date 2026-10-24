@@ -6,6 +6,7 @@ import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 
 import { calculateWater, getPlantInfo } from "@/lib/waterCalc";
+import { migrateGuestData } from "@/lib/migrateGuestData";
 
 import {
   isGuestMode,
@@ -72,34 +73,9 @@ export function useWorkload() {
     }
 
     try {
-      // Garden entries are additive — always safe to migrate.
-      for (const entry of localGarden) {
-        await fetch("/api/garden", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(entry),
-        });
-      }
-
-      // Only migrate the active workload if this account doesn't
-      // already have one — never overwrite real, existing progress.
-      if (localWorkload) {
-        const existingRes = await fetch("/api/workload");
-        const existing = existingRes.ok ? await existingRes.json() : null;
-
-        if (!existing) {
-          await fetch("/api/workload", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: localWorkload.name,
-              tasks: localWorkload.tasks,
-              started_at: localWorkload.startedAt,
-              cumulative_water: localWorkload.cumulativeWater,
-            }),
-          });
-        }
-      }
+      // Throws if any request fails, so we only fall through to
+      // exitGuestMode() and the success toast when everything saved.
+      await migrateGuestData({ garden: localGarden, workload: localWorkload });
 
       exitGuestMode();
 
