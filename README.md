@@ -117,7 +117,7 @@ npx playwright install chromium
 npx playwright test tests/smoke.spec.ts --project=chromium
 ```
 
-GitHub Actions runs lint, Vitest, the build and the Playwright smoke test on every push and pull request.
+GitHub Actions (`.github/workflows/ci.yml`) runs lint, Vitest and the build on every push and pull request, using placeholder env vars. The Playwright smoke test also needs a working Clerk instance, because the app doesn't render until Clerk's script loads. To turn it on in CI, add two repository secrets from a Clerk development instance: `CLERK_PUBLISHABLE_KEY_TEST` and `CLERK_SECRET_KEY_TEST`. Without them that step is skipped and the run shows a notice.
 
 ## Future improvements
 
