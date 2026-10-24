@@ -7,6 +7,7 @@ import ActivePlant from "@/components/ActivePlant";
 import WorkloadPanel from "@/components/WorkloadPanel";
 import CreateWorkloadModal from "@/components/CreateWorkloadModal";
 import EndCycleModal from "@/components/EndCycleModal";
+import EditWorkloadModal from "@/components/EditWorkloadModal";
 
 import { calculateWater, getPlantInfo } from "@/lib/waterCalc";
 import { useWorkload } from "@/hooks/useWorkload";
@@ -22,8 +23,11 @@ export default function HomePage() {
     setCreateOpen,
     endCycleOpen,
     setEndCycleOpen,
+    editOpen,
+    setEditOpen,
     updateWorkload,
     saveWorkload,
+    saveEditedWorkload,
     handleEndChoice,
     handleContinueAsGuest,
   } = useWorkload();
@@ -84,7 +88,11 @@ export default function HomePage() {
         />
 
         {workload && (
-          <WorkloadPanel workload={workload} onUpdate={updateWorkload} />
+          <WorkloadPanel
+            workload={workload}
+            onUpdate={updateWorkload}
+            onEdit={() => setEditOpen(true)}
+          />
         )}
       </div>
 
@@ -93,6 +101,13 @@ export default function HomePage() {
         existingWorkload={workload}
         onClose={() => setCreateOpen(false)}
         onSave={saveWorkload}
+      />
+
+      <EditWorkloadModal
+        open={editOpen}
+        workload={workload}
+        onClose={() => setEditOpen(false)}
+        onSave={saveEditedWorkload}
       />
 
       <EndCycleModal

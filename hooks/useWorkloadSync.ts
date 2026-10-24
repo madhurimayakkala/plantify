@@ -94,6 +94,14 @@ export function useWorkloadSync({
   // Used for one-off, immediate saves (creating/continuing a workload) —
   // persists right away, no debounce.
   async function setWorkload(updated: ActiveWorkload) {
+    // This state is built from the latest UI state, so it supersedes any
+    // debounced save still waiting (which would otherwise fire afterwards
+    // with an older snapshot and overwrite this change).
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+
     setWorkloadState(updated);
     await persistWorkload(updated, {
       onFailRetry: () => setWorkload(updated),

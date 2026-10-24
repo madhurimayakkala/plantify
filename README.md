@@ -34,6 +34,7 @@ _Screenshots and a demo GIF coming soon._
 - **Guest mode:** try the whole app without an account. Data lives in `localStorage` on your device.
 - **Guest-to-account migration:** when a guest signs up or signs in, their local workload and garden are copied to their account. Local data is only cleared if every request succeeded, so a failed attempt can be retried safely. An existing account workload is never overwritten, and garden saves are idempotent (see below).
 - **Optimistic UI with rollback:** task progress updates instantly and is saved with a short debounce. If the save fails, the UI rolls back to the last state that was actually persisted and shows a retry toast.
+- **Edit workloads:** rename a workload, add, remove or edit tasks, and reorder them by drag and drop or with move up/down buttons. Lowering a task's total below its progress lowers the progress to fit, with a warning first. Works in guest and signed-in mode.
 - **Zod validation:** every API request body is validated, with clear 400 errors for bad JSON or bad shapes.
 - **Clerk auth:** sign in and sign up through Clerk; all API routes require a session.
 
@@ -123,7 +124,6 @@ GitHub Actions (`.github/workflows/ci.yml`) runs lint, Vitest and the build on e
 
 - Streaks and a proper history of past cycles
 - Charts of progress over time
-- Editing a workload after it's created (rename, add or remove tasks)
 - Row Level Security using Clerk JWTs, so the database enforces ownership too instead of relying only on server code
 - A real migrations folder for the Supabase schema
 - Component-level tests for the `useWorkload` hook

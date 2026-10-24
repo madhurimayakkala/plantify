@@ -166,6 +166,26 @@ describe("useWorkloadSync (signed in)", () => {
     expect(result.current.workload?.tasks[0].completed).toBe(1);
   });
 
+  it("setWorkload cancels a pending debounced save so it can't overwrite the newer state", async () => {
+    fetchMock.mockImplementation(okResponse);
+    const { result } = renderHook(() =>
+      useWorkloadSync({ usingGuestData: false })
+    );
+
+    // Progress tap (debounced), then an immediate save, e.g. an edit.
+    act(() => result.current.updateWorkload(makeWorkload(1)));
+    await act(async () => {
+      await result.current.setWorkload({
+        ...makeWorkload(1),
+        name: "Renamed",
+      });
+    });
+    await flushDebounce();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).name).toBe("Renamed");
+  });
+
   it("drops a pending save when unmounted", async () => {
     fetchMock.mockImplementation(okResponse);
     const { result, unmount } = renderHook(() =>

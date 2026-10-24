@@ -36,6 +36,8 @@ export function useWorkload() {
 
   const [endCycleOpen, setEndCycleOpen] = useState(false);
 
+  const [editOpen, setEditOpen] = useState(false);
+
   const usingGuestData = guest && !isSignedIn;
 
   const { workload, hydrate, clearWorkload, setWorkload, updateWorkload } =
@@ -159,6 +161,13 @@ export function useWorkload() {
     setCreateOpen(false);
   }
 
+  // Edits apply optimistically: the modal closes right away and, if the
+  // save fails, useWorkloadSync rolls the UI back and offers a retry.
+  async function saveEditedWorkload(edited: ActiveWorkload) {
+    setEditOpen(false);
+    await setWorkload(edited);
+  }
+
   return {
     // Auth / guest state — needed to decide what to render
     isLoaded,
@@ -174,10 +183,13 @@ export function useWorkload() {
     setCreateOpen,
     endCycleOpen,
     setEndCycleOpen,
+    editOpen,
+    setEditOpen,
 
     // Actions
     updateWorkload,
     saveWorkload,
+    saveEditedWorkload,
     handleEndChoice,
     handleContinueAsGuest: continueAsGuest,
   };
