@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import Navbar from "@/components/Navbar";
 import GardenGrid from "@/components/GardenGrid";
+import GardenInsights from "@/components/GardenInsights";
 import type { GardenEntry } from "@/lib/types";
 
 import { useHydrated, useIsGuestMode } from "@/hooks/useGuestMode";
@@ -170,6 +171,8 @@ export default function GardenPage() {
             collection.
           </p>
         </motion.div>
+
+        <GardenInsights entries={entries} />
 
         <GardenGrid entries={entries} onDelete={handleDelete} />
 
