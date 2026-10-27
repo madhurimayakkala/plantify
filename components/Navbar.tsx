@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Leaf, Sprout } from "lucide-react";
@@ -8,15 +7,11 @@ import { motion } from "framer-motion";
 
 import { SignInButton, SignUpButton, Show, UserButton } from "@clerk/nextjs";
 
-import { isGuestMode } from "@/lib/guestStorage";
+import { useIsGuestMode } from "@/hooks/useGuestMode";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [guest, setGuest] = useState(false);
-
-  useEffect(() => {
-    setGuest(isGuestMode());
-  }, [pathname]);
+  const guest = useIsGuestMode();
 
   const links = [
     { href: "/", label: "Dashboard" },

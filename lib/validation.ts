@@ -1,44 +1,14 @@
 // lib/validation.ts
 import { NextResponse } from "next/server";
-import { z, type ZodSchema } from "zod";
+import type { ZodSchema } from "zod";
 
-export const taskSchema = z
-  .object({
-    id: z.string().min(1, "Task id is required"),
-    name: z.string().trim().min(1, "Task name is required").max(200),
-    total: z.number().int().min(1).max(100_000),
-    completed: z.number().int().min(0),
-  })
-  .refine((task) => task.completed <= task.total, {
-    message: "completed cannot exceed total",
-    path: ["completed"],
-  });
-
-export const workloadPutSchema = z.object({
-  name: z.string().trim().min(1, "Workload name is required").max(200),
-  tasks: z.array(taskSchema).max(200, "Too many tasks"),
-  started_at: z.string().min(1, "started_at is required"),
-  cumulative_water: z.number().min(0).max(100),
-});
-
-export const plantStageSchema = z.enum([
-  "seed",
-  "sprout",
-  "growing",
-  "blooming",
-  "tree",
-]);
-
-export const gardenPostSchema = z.object({
-  id: z.string().min(1, "id is required"),
-  workloadName: z.string().trim().min(1, "workloadName is required").max(200),
-  savedAt: z.string().min(1, "savedAt is required"),
-  waterPercent: z.number().min(0).max(100),
-  stage: plantStageSchema,
-  stageEmoji: z.string().min(1).max(8),
-  tasksCompleted: z.number().int().min(0),
-  tasksTotal: z.number().int().min(0),
-});
+export {
+  taskSchema,
+  workloadPutSchema,
+  workloadSaveSchema,
+  plantStageSchema,
+  gardenPostSchema,
+} from "./schemas";
 
 /**
  * Safely parses a request body as JSON and validates it against a Zod

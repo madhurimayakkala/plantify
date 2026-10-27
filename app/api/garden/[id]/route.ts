@@ -1,6 +1,6 @@
 // app/api/garden/[id]/route.ts
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createServerSupabase } from "@/lib/supabase-server";
 import { requireUser } from "@/lib/api-auth";
 
 export async function DELETE(
@@ -11,6 +11,9 @@ export async function DELETE(
 ) {
   const { userId, error: authError } = await requireUser();
   if (authError) return authError;
+
+  // Acts as this user: RLS applies on top of the user_id filters below.
+  const supabase = createServerSupabase();
 
   const { id } = await context.params;
 

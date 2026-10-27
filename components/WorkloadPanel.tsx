@@ -1,15 +1,16 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, Pencil } from "lucide-react";
 import type { ActiveWorkload, Task } from "@/lib/types";
 
 interface Props {
   workload: ActiveWorkload;
   onUpdate: (updated: ActiveWorkload) => void;
+  onEdit?: () => void;
 }
 
-export default function WorkloadPanel({ workload, onUpdate }: Props) {
+export default function WorkloadPanel({ workload, onUpdate, onEdit }: Props) {
   function updateTask(taskId: string, delta: number) {
     const updated: ActiveWorkload = {
       ...workload,
@@ -53,24 +54,37 @@ export default function WorkloadPanel({ workload, onUpdate }: Props) {
       }}
     >
       <div
-        className="px-6 py-4 border-b"
+        className="px-6 py-4 border-b flex items-start justify-between gap-3"
         style={{
           borderColor: "#e8e0d5",
         }}
       >
-        <h2
-          className="font-semibold text-base"
-          style={{
-            color: "#2d1b0e",
-            fontFamily: "'Lora', Georgia, serif",
-          }}
-        >
-          {workload.name}
-        </h2>
+        <div>
+          <h2
+            className="font-semibold text-base"
+            style={{
+              color: "#2d1b0e",
+              fontFamily: "'Lora', Georgia, serif",
+            }}
+          >
+            {workload.name}
+          </h2>
 
-        <p className="text-xs mt-0.5" style={{ color: "#9b8878" }}>
-          Track your progress below
-        </p>
+          <p className="text-xs mt-0.5" style={{ color: "#9b8878" }}>
+            Track your progress below
+          </p>
+        </div>
+
+        {onEdit && (
+          <button
+            onClick={onEdit}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium flex-shrink-0"
+            style={{ background: "#f0e8e0", color: "#5a3e2b" }}
+          >
+            <Pencil size={12} />
+            Edit
+          </button>
+        )}
       </div>
 
       <div className="divide-y" style={{ borderColor: "#f0e8e0" }}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Archive, RefreshCw, Sprout, X } from "lucide-react";
 import type { ActiveWorkload, EndCycleChoice } from "@/lib/types";
@@ -30,10 +30,15 @@ export default function EndCycleModal({
 }: Props) {
   const [processing, setProcessing] = useState(false);
 
-  // Reset the processing state whenever the modal is (re)opened
-  useEffect(() => {
+  // Reset the processing state whenever the modal is (re)opened. This
+  // adjusts state during render (React's documented alternative to an effect
+  // for "reset state when a prop changes"), so there's no extra render pass
+  // with stale state.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) setProcessing(false);
-  }, [open]);
+  }
 
   const water = workload
     ? calculateWater(workload.tasks, workload.cumulativeWater)
@@ -75,7 +80,7 @@ export default function EndCycleModal({
     setProcessing(true);
     await onChoose(choice);
     // Don't reset `processing` here on purpose — the parent closes this
-    // modal on success, and the `open` effect above resets state cleanly
+    // modal on success, and the open check above resets state cleanly
     // the next time it's opened.
   }
 

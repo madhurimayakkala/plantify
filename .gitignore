@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -47,3 +48,12 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Local debug / generated artifacts
+debug.log
+playwright-report/
+test-results/
+tsconfig.tsbuildinfo
+
+# Legacy Flask prototype local database
+legacy/instance/project.db
